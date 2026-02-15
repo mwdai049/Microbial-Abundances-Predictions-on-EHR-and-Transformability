@@ -82,8 +82,9 @@ src/
         age-prediction/
         bmi-prediction/
 data_preprocessing/
-  train_test_split.py
+    traintest_split.py
 out/
+    model_summary.xlsx
     figs/  
 qiime2-moshpit-macos-latest-conda.yml
 qiime2-moshpit-ubuntu-latest-conda.yml
