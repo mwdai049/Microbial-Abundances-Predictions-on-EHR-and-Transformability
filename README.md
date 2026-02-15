@@ -74,12 +74,15 @@ Our models were trained on human subjects data with personally identifying infor
 src/
     absolute-abundance-modeling/
         linear_models.py
+        nonlinear_models.py
     differential-abundance/
         BIRDMAn/
             BIRDMAn_metaG_pergenome.py
     metadata-variable-prediction/
         age-prediction/
         bmi-prediction/
+data_preprocessing/
+  train_test_split.py
 out/
     figs/  
 qiime2-moshpit-macos-latest-conda.yml
