@@ -80,7 +80,12 @@ src/
             BIRDMAn_metaG_pergenome.py
     metadata-variable-prediction/
         age-prediction/
+          age_rf_classifier.ipynb
+          age_rf_classifier.py
+          age_rf_regressor.ipynb
+          age_rf_regressor.py
         bmi-prediction/
+          bmi_HGBR_rf_regressor.ipynb
 data_preprocessing/
     traintest_split.py
 out/
