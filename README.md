@@ -72,10 +72,14 @@ Our models were trained on human subjects data with personally identifying infor
 ### Directory Structure
 ```text
 src/
-    pcoa.py
-    pcoa.ipynb
-    age_modelling.py
-    age_modeeling.ipynb  
+    absolute-abundance-modeling/
+        linear_models.py
+    differential-abundance/
+        BIRDMAn/
+            BIRDMAn_metaG_pergenome.py
+    metadata-variable-prediction/
+        age-prediction/
+        bmi-prediction/
 out/
     figs/  
 qiime2-moshpit-macos-latest-conda.yml
