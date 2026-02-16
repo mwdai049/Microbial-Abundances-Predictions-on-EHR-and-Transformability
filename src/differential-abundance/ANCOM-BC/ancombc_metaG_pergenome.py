@@ -245,7 +245,7 @@ sig_counts = sig_counts.drop("(Intercept)", errors="ignore")
 sig_counts.plot(kind="bar")
 plt.tight_layout()
 plt.savefig(
-    "figs/sig_counts.png",
+    "figs/ANCOM-BC/sig_counts.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -422,7 +422,7 @@ ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 
 plt.tight_layout()
-plt.savefig("figs/permanova_marginal_variance.png", dpi=300, bbox_inches="tight")
+plt.savefig("figs/ANCOM-BC/permanova_marginal_variance.png", dpi=300, bbox_inches="tight")
 plt.show()
 
 
@@ -467,7 +467,7 @@ plt.ylabel("# significant ANCOM-BC features (q < 0.05)")
 plt.title("Community variance vs differential abundance signal")
 plt.tight_layout()
 plt.savefig(
-    "figs/comm_var_vs_da_sig.png",
+    "figs/ANCOM-BC/comm_var_vs_da_sig.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -589,7 +589,7 @@ def plot_group_heatmap(genus_lfc, group_name, terms, top_n=40):
     plt.tight_layout()
     fname = group_name.lower().replace(" ", "_")
     plt.savefig(
-        f"figs/ancombc_{fname}_heatmap.png",
+        f"figs/ANCOM-BC/ancombc_{fname}_heatmap.png",
         dpi=300,
         bbox_inches="tight"
     )
@@ -620,7 +620,7 @@ def plot_group_trends(genus_lfc, group_name, terms, top_n=15):
     plt.tight_layout()
     fname = group_name.lower().replace(" ", "_")
     plt.savefig(
-        f"figs/ancombc_{fname}_trends.png",
+        f"figs/ANCOM-BC/ancombc_{fname}_trends.png",
         dpi=300,
         bbox_inches="tight"
     )
@@ -646,7 +646,7 @@ def plot_group_barh(genus_lfc, group_name, terms, top_n=20):
     plt.tight_layout()
     fname = group_name.lower().replace(" ", "_")
     plt.savefig(
-        f"figs/ancombc_{fname}_barh.png",
+        f"figs/ANCOM-BC/ancombc_{fname}_barh.png",
         dpi=300,
         bbox_inches="tight"
     )
@@ -696,7 +696,7 @@ plt.xticks(rotation=30, ha="right")
 
 plt.tight_layout()
 plt.savefig(
-    "figs/ancombc_genus_lfc_all_covariates.png",
+    "figs/ANCOM-BC/ancombc_genus_lfc_all_covariates.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -712,7 +712,7 @@ plt.xlabel("Max |log fold change|")
 plt.tight_layout()
 
 plt.savefig(
-    f"figs/ancombc_max_genus_lfc_per_covariate.png",
+    f"figs/ANCOM-BC/ancombc_max_genus_lfc_per_covariate.png",
     dpi=300,
     bbox_inches="tight"
 )
