@@ -90,9 +90,27 @@ data_preprocessing/
     traintest_split.py
 out/
     model_summary.xlsx
-    figs/  
+    figs/
+      age-prediction/
+        abs_rf_reg_spline.png
+        abs_rf_reg.png
+        final_abs_rf_top20_features.png
+        final_rel_rf_top20_features.png
+        final_rf_cm.png
+        final_rf_roc.png
+        first_pass_abs_rf_cm.png
+        first_pass_abs_rf_roc.png
+        first_pass_rel_rf_cm.png
+        first_pass_rel_rf_roc.png
+        rel_rf_reg_spline.png
+        rel_rf_reg.png
+        retuned_abs_rf_cm.png
+        retuned_abs_rf_roc.png
+        retuned_rel_rf_cm.png
+        retuned_rel_rf_roc.png
 qiime2-moshpit-macos-latest-conda.yml
 qiime2-moshpit-ubuntu-latest-conda.yml
 README.md
 ```
+
 
