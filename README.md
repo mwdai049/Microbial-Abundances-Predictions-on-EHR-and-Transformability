@@ -71,26 +71,26 @@ Our models were trained on human subjects data with personally identifying infor
 
 ### Directory Structure
 ```text
-src/
-    absolute-abundance-modeling/
-        linear_models.py
-        nonlinear_models.py
-    differential-abundance/
-        BIRDMAn/
-            BIRDMAn_metaG_pergenome.py
-    metadata-variable-prediction/
-        age-prediction/
-          age_rf_classifier.ipynb
-          age_rf_classifier.py
-          age_rf_regressor.ipynb
-          age_rf_regressor.py
-        bmi-prediction/
-          bmi_HGBR_rf_regressor.ipynb
 data_preprocessing/
     traintest_split.py
 out/
     model_summary.xlsx
     figs/
+      ANCOM-BC/
+        ancombc_age_heatmap.png
+        ancombc_age_trends.png
+        ancombc_bmi_heatmap.png
+        ancombc_bmi_trends.png
+        ancombc_bowel_movement_quality_barh.png
+        ancombc_bowel_movement_quality_heatmap.png
+        ancombc_bowel_movement_type_barh.png
+        ancombc_bowel_movement_type_heatmap.png
+        ancombc_genus_lfc_all_covariates.png
+        ancombc_max_genus_lfc_per_covariate.png
+        ancombc_sex_barh.png
+        ancombc_sex_heatmap.png
+        comm_var_vs_da_sig.png
+        sig_counts.png
       age-prediction/
         abs_rf_reg_spline.png
         abs_rf_reg.png
@@ -108,6 +108,24 @@ out/
         retuned_abs_rf_roc.png
         retuned_rel_rf_cm.png
         retuned_rel_rf_roc.png
+src/
+    absolute-abundance-modeling/
+        linear_models.py
+        nonlinear_models.py
+    differential-abundance/
+        BIRDMAn/
+            BIRDMAn_metaG_pergenome.py
+        ANCOM-BC/
+            ancombc_metaG_pergenome.ipynb
+            ancombc_metaG_pergenome.py
+    metadata-variable-prediction/
+        age-prediction/
+          age_rf_classifier.ipynb
+          age_rf_classifier.py
+          age_rf_regressor.ipynb
+          age_rf_regressor.py
+        bmi-prediction/
+          bmi_HGBR_rf_regressor.ipynb
 qiime2-moshpit-macos-latest-conda.yml
 qiime2-moshpit-ubuntu-latest-conda.yml
 README.md
