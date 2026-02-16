@@ -30,7 +30,7 @@ conda env create \
 ```
 To activate, run:
 ```
-conda activate qiime2-amplicon-2025.7
+conda activate qiime2-moshpit-2025.7
 ```
 
 #### macOS (Apple Silicon)
@@ -72,6 +72,7 @@ Our models were trained on human subjects data with personally identifying infor
 ### Directory Structure
 ```text
 data_preprocessing/
+    preprocessing.py
     traintest_split.py
 out/
     model_summary.xlsx
