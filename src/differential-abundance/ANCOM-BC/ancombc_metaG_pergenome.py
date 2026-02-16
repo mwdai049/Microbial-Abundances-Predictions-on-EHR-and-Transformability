@@ -240,7 +240,7 @@ lfc = pd.read_csv("/home/nxwang/ancombc_export/lfc_slice.csv", index_col=0)
 q = pd.read_csv("/home/nxwang/ancombc_export/q_val_slice.csv", index_col=0)
 sig_counts = (q < 0.05).sum().sort_values(ascending=False)
 
-os.makedirs("figs", exist_ok=True)
+os.makedirs("figs/ANCOM-BC", exist_ok=True)
 sig_counts = sig_counts.drop("(Intercept)", errors="ignore")
 sig_counts.plot(kind="bar")
 plt.tight_layout()
