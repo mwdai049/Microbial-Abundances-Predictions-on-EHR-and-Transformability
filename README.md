@@ -93,22 +93,69 @@ out/
         comm_var_vs_da_sig.png
         sig_counts.png
       age-prediction/
-        abs_rf_reg_spline.png
-        abs_rf_reg.png
-        final_abs_rf_top20_features.png
-        final_rel_rf_top20_features.png
-        final_rf_cm.png
-        final_rf_roc.png
-        first_pass_abs_rf_cm.png
-        first_pass_abs_rf_roc.png
-        first_pass_rel_rf_cm.png
-        first_pass_rel_rf_roc.png
-        rel_rf_reg_spline.png
-        rel_rf_reg.png
-        retuned_abs_rf_cm.png
-        retuned_abs_rf_roc.png
-        retuned_rel_rf_cm.png
-        retuned_rel_rf_roc.png
+        age-numeric-predictor/
+          age_reg_model_comparisons.csv
+          gbr_comparison.png
+          rbf_comparison.png
+          rf_reg_comparison.png
+          rf_taxa_comparison.png
+        age-prediction-classifier/
+          abs_rf_nogrid_SHAP.png
+          abs_rf_nogrid_top20_features.png
+          age_abs_rf_sex_cm.png
+          age_abs_rf_sex_gene_cm.png
+          age_rel_rf_sex_cm.png
+          age_rel_rf_sex_gene_cm.png
+          balanced_rf_cm_comparison.png
+          final_abs_rf_top20_features.png
+          final_rel_rf_top20_features.png
+          final_rf_cm.png
+          final_rf_roc.png
+          first_pass_abs_rf_cm.png
+          first_pass_abs_rf_roc.png
+          first_pass_rel_rf_cm.png
+          first_pass_rel_rf_roc.png
+          rel_rf_nogrid_SHAP.png
+          retuned_abs_rf_cm.png
+          retuned_abs_rf_roc.png
+          retuned_rel_rf_cm.png
+          retuned_rel_rf_roc.png
+          rf_macro_auc_comparison.png
+        age-prediction-regressor/
+          abs_rf_reg.png
+          abs_rf_reg_spline.png
+          rel_rf_reg.png
+          rel_rf_reg_spline.png
+      sex-prediction/
+        sex-prediction-other-models/
+          sex_abs_lr_cm.png
+          sex_abs_lr_shap.png
+          sex_abs_lr_top20_features.png
+          sex_lr_cm_comparison.png
+          sex_lr_roc_comparison.png
+          sex_rel_lr_cm.png
+          sex_rel_lr_shap.png
+          sex_rel_lr_top20_features.png
+          sex_rel_svm_cm.png
+          sex_rf_classifier_final.py
+          sex_svm_cm_comparison.png
+          sex_svm_roc_comparison.png
+        sex-random-forest-classifier/
+          balanced_sex_abs_rf_ageless_cm.png
+          balanced_sex_abs_rf_ageless_miss_cm.png
+          balanced_sex_abs_rf_cm.png
+          balanced_sex_rel_rf_ageless_cm.png
+          balanced_sex_rel_rf_ageless_miss_cm.png
+          balanced_sex_rel_rf_cm.png
+          sex_abs_rf_shap.png
+          sex_abs_rf_top20_features.png
+          sex_rel_rf_shap.png
+          sex_rel_rf_top20_features.png
+          sex_rf_cm_comparison.png
+          sex_rf_roc_comparison.png
+          unbalanced_sex_abs_rf_cm.png
+          unbalanced_sex_rel_rf_cm.png
+        model_comparisons.csv
 src/
     absolute-abundance-modeling/
         linear_models.py
@@ -121,12 +168,19 @@ src/
             ancombc_metaG_pergenome.py
     metadata-variable-prediction/
         age-prediction/
+          age_numeric_predictor_final.ipynb
+          age_numeric_predictor_final.py
           age_rf_classifier.ipynb
           age_rf_classifier.py
           age_rf_regressor.ipynb
           age_rf_regressor.py
         bmi-prediction/
           bmi_HGBR_rf_regressor.ipynb
+        sex-rediction/
+          sex_lr_svm_final.ipynb
+          sex_lr_svm_final.py
+          sex_rf_classifier_final.ipynb
+          sex_rf_classifier_final.py
 qiime2-moshpit-macos-latest-conda.yml
 qiime2-moshpit-ubuntu-latest-conda.yml
 README.md
