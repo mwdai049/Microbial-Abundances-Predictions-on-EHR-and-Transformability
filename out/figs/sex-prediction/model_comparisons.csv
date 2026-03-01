@@ -1,0 +1,7 @@
+Task,Target,Representation,Model,Val_Accuracy,Test_Accuracy,Val_MacroF1,Test_MacroF1,Val_WeightedF1,Test_WeightedF1
+Classification,sex,Absolute,RandomForest,0.68189,0.669291,0.655743,0.64717,0.692049,0.677083
+Classification,sex,Absolute,Logistic Regression,0.674016,0.680315,0.649481,0.661951,0.684969,0.688628
+Classification,sex,Absolute,SVM_RBF,0.695412,0.678319,0.667887,0.653127,0.69931,0.675876
+Classification,sex,Relative,RandomForest,0.683465,0.699213,0.653054,0.677149,0.692361,0.705725
+Classification,sex,Relative,Logistic Regression,0.710236,0.670866,0.684612,0.653541,0.719014,0.679773
+Classification,sex,Relative,RandomForest,0.704889,0.687675,0.687576,0.66636,0.722972,0.690732

@@ -50,25 +50,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, SVR
 
 # We try with log
-# Preprocessing train/test/val datasets
-abs_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_train.csv', low_memory=False)
-abs_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_test.csv', low_memory=False)
-abs_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_val.csv', low_memory=False)
-
-rel_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_train.csv', low_memory=False)
-rel_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_test.csv', low_memory=False)
-rel_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_val.csv', low_memory=False)
-
-# Stratifying by gender
-abs_train = abs_train[abs_train["sex"].isin(['male', 'female'])].copy()
-abs_val = abs_val[abs_val["sex"].isin(['male', 'female'])].copy()
-abs_test = abs_test[abs_test["sex"].isin(['male', 'female'])].copy()
-
-rel_train = rel_train[rel_train["sex"].isin(['male', 'female'])].copy()
-rel_val = rel_val[rel_val["sex"].isin(['male', 'female'])].copy()
-rel_test = rel_test[rel_test["sex"].isin(['male', 'female'])].copy()
-
-# We try with log
 # On clr data
 # Preprocessing train/test/val datasets
 abs_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_train.csv', low_memory=False)
@@ -159,7 +140,13 @@ abs_logreg = logreg.fit(abs_X_train_log, abs_Y_train)
 
 # Validation set
 val_preds = abs_logreg.predict(abs_X_val_log)
-print("Validation accuracy:", accuracy_score(abs_Y_val, val_preds))
+abs_lr_val_accuracy = accuracy_score(abs_Y_val, val_preds)
+print("Validation accuracy:", abs_lr_val_accuracy)
+
+abs_lr_val_macro_f1 = f1_score(abs_Y_val, val_preds, average='macro')
+abs_lr_val_weighted_f1 = f1_score(abs_Y_val, val_preds, average='weighted')
+print("Validation Macro F1:", abs_lr_val_macro_f1)
+print("Validaiton Weighted F1:", abs_lr_val_weighted_f1)
 
 # Test set
 abs_test_preds = abs_logreg.predict(abs_X_test_log)
@@ -167,6 +154,11 @@ abs_lr_accuracy = accuracy_score(abs_Y_test, abs_test_preds)
 print("Test accuracy:", abs_lr_accuracy)
 y_prob = abs_logreg.predict_proba(abs_X_test_log)[:, 1]
 print("AUC:", roc_auc_score(abs_Y_test, y_prob))
+
+abs_lr_test_macro_f1 = f1_score(abs_Y_test, abs_test_preds, average='macro')
+abs_lr_test_weighted_f1 = f1_score(abs_Y_test, abs_test_preds, average='weighted')
+print("Macro F1:", abs_lr_test_macro_f1)
+print("Weighted F1:",abs_lr_test_weighted_f1)
 
 cm = confusion_matrix(abs_Y_test, abs_test_preds)
 labels = abs_logreg.classes_
@@ -196,7 +188,13 @@ rel_logreg = logreg.fit(rel_X_train_log, rel_Y_train)
 
 # Validation set
 val_preds = rel_logreg.predict(rel_X_val_log)
-print("Validation accuracy:", accuracy_score(rel_Y_val, val_preds))
+rel_lr_val_accuracy = accuracy_score(abs_Y_val, val_preds)
+print("Validation accuracy:", rel_lr_val_accuracy)
+
+rel_lr_val_macro_f1 = f1_score(abs_Y_val, val_preds, average='macro')
+rel_lr_val_weighted_f1 = f1_score(abs_Y_val, val_preds, average='weighted')
+print("Validation Macro F1:", rel_lr_val_macro_f1)
+print("Validaiton Weighted F1:", rel_lr_val_weighted_f1)
 
 # Test set
 rel_test_preds = rel_logreg.predict(rel_X_test_log)
@@ -204,6 +202,11 @@ rel_lr_accuracy = accuracy_score(rel_Y_test, rel_test_preds)
 print("Test accuracy:", rel_lr_accuracy)
 y_prob = abs_logreg.predict_proba(rel_X_test_log)[:, 1]
 print("AUC:", roc_auc_score(rel_Y_test, y_prob))
+
+rel_lr_test_macro_f1 = f1_score(abs_Y_test, rel_test_preds, average='macro')
+rel_lr_test_weighted_f1 = f1_score(abs_Y_test, rel_test_preds, average='weighted')
+print("Macro F1:", rel_lr_test_macro_f1)
+print("Weighted F1:",rel_lr_test_weighted_f1)
 
 cm = confusion_matrix(rel_Y_test, rel_test_preds)
 labels = abs_logreg.classes_
@@ -509,10 +512,15 @@ y_probs = abs_best_model.predict_proba(abs_X_val_log)[:, 1]
 y_preds = abs_best_model.predict(abs_X_val_log)
 
 abs_val_auc = roc_auc_score(abs_Y_val, y_probs)
-bal_acc = balanced_accuracy_score(abs_Y_val, y_preds)
+abs_val_bal_acc = balanced_accuracy_score(abs_Y_val, y_preds)
 
 print("Validation AUC:", auc)
-print("Validation Balanced Accuracy:", bal_acc)
+print("Validation Balanced Accuracy:", abs_val_bal_acc)
+
+abs_svm_val_macro_f1 = f1_score(abs_Y_val, y_preds, average='macro')
+abs_svm_val_weighted_f1 = f1_score(abs_Y_val, y_preds, average='weighted')
+print("Validation Macro F1:", abs_svm_val_macro_f1)
+print("Validaiton Weighted F1:", abs_svm_val_weighted_f1)
 
 # Test set
 test_probs = abs_best_model.predict_proba(abs_X_test_log)[:, 1]
@@ -521,6 +529,11 @@ abs_test_auc = roc_auc_score(abs_Y_test, test_probs)
 abs_bal_acc = balanced_accuracy_score(abs_Y_test, abs_test_pred)
 print("Test AUC:", abs_test_auc)
 print("Test Balanced Accuracy:", abs_bal_acc)
+
+abs_svm_test_macro_f1 = f1_score(abs_Y_test, abs_test_pred, average='macro')
+abs_svm_test_weighted_f1 = f1_score(abs_Y_test, abs_test_pred, average='weighted')
+print("Macro F1:", abs_svm_test_macro_f1)
+print("Weighted F1:",abs_svm_test_weighted_f1)
 
 cm = confusion_matrix(abs_Y_test, abs_test_pred)
 labels = abs_best_model.classes_
@@ -545,6 +558,7 @@ plt.tight_layout()
 plt.savefig("sex_abs_svm_cm.png", format="png")
 plt.show()
 
+# Relative
 rel_grid = grid.fit(rel_X_train_log, rel_Y_train)
 
 print("Best params:", grid.best_params_)
@@ -557,10 +571,15 @@ y_probs = rel_best_model.predict_proba(rel_X_val_log)[:, 1]
 y_pred = rel_best_model.predict(rel_X_val_log)
 
 rel_val_auc = roc_auc_score(rel_Y_val, y_probs)
-bal_acc = balanced_accuracy_score(rel_Y_val, y_pred)
+rel_val_bal_acc = balanced_accuracy_score(rel_Y_val, y_pred)
 
 print("Validation AUC:", rel_val_auc)
-print("Validation Balanced Accuracy:", bal_acc)
+print("Validation Balanced Accuracy:", rel_val_bal_acc)
+
+rel_svm_val_macro_f1 = f1_score(abs_Y_val, y_pred, average='macro')
+rel_svm_val_weighted_f1 = f1_score(abs_Y_val, y_pred, average='weighted')
+print("Validation Macro F1:", rel_svm_val_macro_f1)
+print("Validaiton Weighted F1:", rel_svm_val_weighted_f1)
 
 # Test set
 test_probs = rel_best_model.predict_proba(rel_X_test_log)[:, 1]
@@ -569,6 +588,11 @@ rel_test_auc = roc_auc_score(rel_Y_test, test_probs)
 rel_bal_acc = balanced_accuracy_score(rel_Y_test, rel_test_pred)
 print("Test AUC:", rel_test_auc)
 print("Test Balanced Accuracy:", rel_bal_acc)
+
+rel_svm_test_macro_f1 = f1_score(abs_Y_test, rel_test_pred, average='macro')
+rel_svm_test_weighted_f1 = f1_score(abs_Y_test, rel_test_pred, average='weighted')
+print("Macro F1:", rel_svm_test_macro_f1)
+print("Weighted F1:",rel_svm_test_weighted_f1)
 
 cm = confusion_matrix(rel_Y_test, rel_test_pred)
 labels = abs_best_model.classes_
@@ -974,3 +998,156 @@ print("val accuracy:", accuracy_score(rel_Y_bal_val, rel_val_preds))
 rel_bal_val_preds = rel_best_model.predict(rel_X_val_bal_log)
 print("val accuracy:", accuracy_score(rel_Y_bal_val, rel_bal_val_preds))
 
+# Balancing the training set
+# Absolute quant
+target_n = 585
+
+abs_balanced_train = (
+    abs_train
+    .groupby('sex', group_keys=False)
+    .apply(lambda x: x.sample(
+        n=min(len(x), target_n),
+        random_state=42
+    ))
+)
+
+# Relative quant
+rel_balanced_train = (
+    rel_train
+    .groupby("sex", group_keys=False)
+    .apply(lambda x: x.sample(
+        n=min(len(x), target_n),
+        random_state=42
+    ))
+)
+
+# # Splitting into features and targets
+# Absolute quant data
+abs_X_train = abs_balanced_train[abs_train.columns[:1148]].drop(columns=['original_SampleID'])
+abs_Y_train = abs_balanced_train['sex']
+
+abs_X_test = abs_test[abs_test.columns[:1148]].drop(columns=['original_SampleID'])
+abs_Y_test  = abs_test['sex']
+
+abs_X_val = abs_val[abs_val.columns[:1148]].drop(columns=['original_SampleID'])
+abs_Y_val  = abs_val['sex']
+
+# Relative abundance data
+rel_X_train = rel_balanced_train[rel_balanced_train.columns[:1148]].drop(columns=['original_SampleID'])
+rel_Y_train = rel_balanced_train['sex']
+
+rel_X_test = rel_test[rel_test.columns[:1148]].drop(columns=['original_SampleID'])
+rel_Y_test  = rel_test['sex']
+
+rel_X_val = rel_val[rel_val.columns[:1148]].drop(columns=['original_SampleID'])
+rel_Y_val  = rel_val['sex']
+
+# Preprocessing
+# Using log transform to standardize the data
+# Absolute quant data
+abs_X_train_log = abs_X_train.copy()
+abs_X_train_log = np.log1p(abs_X_train_log)
+
+abs_X_test_log = abs_X_test.copy()
+abs_X_test_log = np.log1p(abs_X_test_log)
+
+abs_X_val_log = abs_X_val.copy()
+abs_X_val_log = np.log1p(abs_X_val_log)
+
+# Relative abundance data
+rel_X_train_log = rel_X_train.copy()
+rel_X_train_log = np.log1p(rel_X_train_log)
+
+rel_X_test_log = rel_X_test.copy()
+rel_X_test_log = np.log1p(rel_X_test_log)
+
+rel_X_val_log = rel_X_val.copy()
+rel_X_val_log = np.log1p(rel_X_val_log)
+
+# Balanced absolute with no age
+abs_bal_ageless_rf = RandomForestClassifier(
+    n_estimators=300,
+    random_state=42,
+    class_weight='balanced',
+    n_jobs=-1
+)
+abs_bal_ageless_rf.fit(abs_X_train_log, abs_Y_train)
+
+# Validation set
+val_preds = abs_bal_ageless_rf.predict(abs_X_val_log)
+abs_rf_val_accuracy = accuracy_score(abs_Y_val, val_preds)
+print("Validation accuracy:", abs_rf_val_accuracy)
+
+abs_rf_val_macro_f1 = f1_score(abs_Y_val, val_preds, average='macro')
+abs_rf_val_weighted_f1 = f1_score(abs_Y_val, val_preds, average='weighted')
+print("Validation Macro F1:", abs_rf_val_macro_f1)
+print("Validaiton Weighted F1:", abs_rf_val_weighted_f1)
+
+# Test set
+test_preds = abs_bal_ageless_rf.predict(abs_X_test_log)
+abs_bal_ageless_rf_accuracy = accuracy_score(abs_Y_test, test_preds)
+print("Test accuracy:", abs_bal_ageless_rf_accuracy)
+
+abs_rf_test_macro_f1 = f1_score(abs_Y_test, test_preds, average='macro')
+abs_rf_test_weighted_f1 = f1_score(abs_Y_test, test_preds, average='weighted')
+print("Macro F1:", abs_rf_test_macro_f1)
+print("Weighted F1:",abs_rf_test_weighted_f1)
+
+# Balanced relative with no age
+rel_bal_ageless_rf = RandomForestClassifier(
+    n_estimators=300,
+    random_state=42,
+    class_weight='balanced',
+    n_jobs=-1
+)
+rel_bal_ageless_rf.fit(rel_X_train_log, rel_Y_train)
+
+# Validation set
+val_preds = rel_bal_ageless_rf.predict(rel_X_val_log)
+rel_rf_val_accuracy = accuracy_score(rel_Y_val, val_preds)
+print("Validation accuracy:", rel_rf_val_accuracy)
+
+rel_rf_val_macro_f1 = f1_score(abs_Y_val, val_preds, average='macro')
+rel_rf_val_weighted_f1 = f1_score(abs_Y_val, val_preds, average='weighted')
+print("Validation Macro F1:", rel_rf_val_macro_f1)
+print("Validaiton Weighted F1:", rel_rf_val_weighted_f1)
+
+# Test set
+test_preds = rel_bal_ageless_rf.predict(rel_X_test_log)
+rel_rf_bal_ageless_rf_accuracy = accuracy_score(rel_Y_test, test_preds)
+print("Test accuracy:", rel_rf_bal_ageless_rf_accuracy)
+
+rel_rf_test_macro_f1 = f1_score(abs_Y_test, test_preds, average='macro')
+rel_rf_test_weighted_f1 = f1_score(abs_Y_test, test_preds, average='weighted')
+print("Macro F1:", rel_rf_test_macro_f1)
+print("Weighted F1:",rel_rf_test_weighted_f1)
+
+# Creating the table
+task = ['Classification', 'Classification', 'Classification', 'Classification', 'Classification', 'Classification']
+target = ['sex','sex','sex','sex','sex','sex']
+representation = ['Absolute', 'Absolute', 'Absolute', 'Relative', 'Relative', 'Relative']
+model = ['RandomForest', 'Logistic Regression', 'SVM_RBF', 'RandomForest', 'Logistic Regression', 'RandomForest']
+Val_Accuracy = [abs_rf_val_accuracy, abs_lr_val_accuracy, abs_val_bal_acc, rel_rf_val_accuracy, rel_lr_val_accuracy, rel_val_bal_acc]
+Test_Accuracy = [abs_bal_ageless_rf_accuracy, abs_lr_accuracy, abs_bal_acc, rel_rf_bal_ageless_rf_accuracy, rel_lr_accuracy, rel_bal_acc]
+Val_MacroF1 = [abs_rf_val_macro_f1, abs_lr_val_macro_f1, abs_svm_val_macro_f1, rel_rf_val_macro_f1, rel_lr_val_macro_f1, rel_svm_val_macro_f1]
+Test_MacroF1 = [abs_rf_test_macro_f1, abs_lr_test_macro_f1, abs_svm_test_macro_f1, rel_rf_test_macro_f1, rel_lr_test_macro_f1, rel_svm_test_macro_f1]
+Val_WeightedF1 = [abs_rf_val_weighted_f1, abs_lr_val_weighted_f1, abs_svm_val_weighted_f1, rel_rf_val_weighted_f1, rel_lr_val_weighted_f1, rel_svm_val_weighted_f1]
+Test_WeightedF1 = [abs_rf_test_weighted_f1, abs_lr_test_weighted_f1, abs_svm_test_weighted_f1, rel_rf_test_weighted_f1, rel_lr_test_weighted_f1, rel_svm_test_weighted_f1]
+
+results_df = pd.DataFrame({
+    'Task': task,
+    'Target': target,
+    'Representation': representation,
+    'Model': model,
+    'Val_Accuracy': Val_Accuracy,
+    'Test_Accuracy': Test_Accuracy,
+    'Val_MacroF1': Val_MacroF1,
+    'Test_MacroF1': Test_MacroF1,
+    'Val_WeightedF1': Val_WeightedF1,
+    'Test_WeightedF1': Test_WeightedF1
+})
+
+results_df = results_df.round(6)
+results_df
+
+results_df.to_csv("model_comparisons.csv", index=False)
