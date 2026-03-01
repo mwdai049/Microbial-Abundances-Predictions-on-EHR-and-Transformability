@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Auto-generated from: age_numeric_predictor_final.ipynb
-Generated on: 2026-03-01T23:09:36
-
-This script was created by extracting code cells from the notebook.
-Notebook magics/shell commands (%, %%, !) were commented out.
-"""
-
 # Filepath imports
 # Making sure filepath runs smoothly
 import sys
