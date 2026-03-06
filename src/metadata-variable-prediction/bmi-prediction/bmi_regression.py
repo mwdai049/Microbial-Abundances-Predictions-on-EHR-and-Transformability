@@ -353,7 +353,7 @@ def main():
         default=0.4,
         help="Prevalence threshold for feature filtering (default: 0.4)."
     )
-    args = parser.parse_args()
+    args = parser.parse_args(args=[])
 
     # Load data
     abs_train, abs_val, abs_test, rel_train, rel_val, rel_test = load_data()

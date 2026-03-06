@@ -423,7 +423,7 @@ def main():
         choices=["true", "pred", "all", None],
         help="Confusion matrix normalization (sklearn normalize=)."
     )
-    args = parser.parse_args()
+    args = parser.parse_args(args=[])
 
     # Load abs/rel
     abs_train, abs_val, abs_test, rel_train, rel_val, rel_test = load_data()

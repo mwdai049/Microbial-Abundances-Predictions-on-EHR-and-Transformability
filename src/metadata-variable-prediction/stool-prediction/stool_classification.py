@@ -425,7 +425,7 @@ def main():
         choices=["all", "RandomForest", "HGB", "SVM_RBF"],
         help="Which model(s) to PLOT. Training still runs all models (kept unchanged)."
     )
-    args = parser.parse_args()
+    args = parser.parse_args(args=[])
 
     abs_train, abs_val, abs_test, rel_train, rel_val, rel_test = load_data()
 
