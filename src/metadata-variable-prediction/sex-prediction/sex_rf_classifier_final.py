@@ -5,7 +5,6 @@ import os
 print(sys.executable)
 
 env_root = sys.prefix
-
 env_bin = os.path.join(env_root, "bin")
 os.environ["PATH"] = env_bin + os.pathsep + os.environ.get("PATH", "")
 
@@ -47,1090 +46,550 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, SVR
 
-# Preprocessing train/test/val datasets
-abs_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_train.csv', low_memory=False)
-abs_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_test.csv', low_memory=False)
-abs_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_val.csv', low_memory=False)
-
-rel_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_train.csv', low_memory=False)
-rel_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_test.csv', low_memory=False)
-rel_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_val.csv', low_memory=False)
-
-# Stratifying by gender
-abs_train = abs_train[abs_train["sex"].isin(['male', 'female'])].copy()
-abs_val = abs_val[abs_val["sex"].isin(['male', 'female'])].copy()
-abs_test = abs_test[abs_test["sex"].isin(['male', 'female'])].copy()
-
-rel_train = rel_train[rel_train["sex"].isin(['male', 'female'])].copy()
-rel_val = rel_val[rel_val["sex"].isin(['male', 'female'])].copy()
-rel_test = rel_test[rel_test["sex"].isin(['male', 'female'])].copy()
-
-# RF #1: All columns and age
-# Splitting into features and targets
-# Absolute
-abs_X_train = (
-    abs_train[abs_train.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_train['age'])
-)
-abs_Y_train = abs_train['sex']
-
-abs_X_test = (
-    abs_test[abs_test.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_test['age'])
-)
-abs_Y_test = abs_test['sex']
-
-abs_X_val = (
-    abs_val[abs_val.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_val['age'])
-)
-abs_Y_val = abs_val['sex']
-
-# Absolute
-rel_X_train = (
-    rel_train[rel_train.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_train['age'])
-)
-rel_Y_train = rel_train['sex']
-
-rel_X_test = (
-    rel_test[rel_test.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=rel_test['age'])
-)
-rel_Y_test = rel_test['sex']
-
-rel_X_val = (
-    rel_val[rel_val.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=rel_val['age'])
-)
-rel_Y_val = rel_val['sex']
-
-# Preprocessing
-# Using log transform to standardize the data
-# Absolute quant data
-abs_X_train_log = abs_X_train.copy()
-abs_X_train_log = np.log1p(abs_X_train_log)
-
-abs_X_test_log = abs_X_test.copy()
-abs_X_test_log = np.log1p(abs_X_test_log)
-
-abs_X_val_log = abs_X_val.copy()
-abs_X_val_log = np.log1p(abs_X_val_log)
-
-# Relative abundance data
-rel_X_train_log = rel_X_train.copy()
-rel_X_train_log = np.log1p(rel_X_train_log)
-
-rel_X_test_log = rel_X_test.copy()
-rel_X_test_log = np.log1p(rel_X_test_log)
-
-rel_X_val_log = rel_X_val.copy()
-rel_X_val_log = np.log1p(rel_X_val_log)
-
-# Absolute
-abs_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    n_jobs=-1
-)
-abs_rf.fit(abs_X_train_log, abs_Y_train)
-
-# Validation set
-val_preds = abs_rf.predict(abs_X_val_log)
-print("Validation accuracy:", accuracy_score(abs_Y_val, val_preds))
-
-# Test set
-test_preds = abs_rf.predict(abs_X_test_log)
-abs_rf_accuracy = accuracy_score(abs_Y_test, test_preds)
-print("Test accuracy:", abs_rf_accuracy)
-
-cm = confusion_matrix(abs_Y_test, test_preds)
-labels = abs_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Absolute RF Classifier with Age as a Feature")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("unbalanced_sex_abs_rf_cm.png", format="png")
-plt.show()
-
-# Relative
-rel_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    n_jobs=-1
-)
-rel_rf.fit(rel_X_train_log, rel_Y_train)
-
-# Validation set
-val_preds = rel_rf.predict(rel_X_val_log)
-print("Validation accuracy:", accuracy_score(rel_Y_val, val_preds))
-
-# Test set
-test_preds = rel_rf.predict(rel_X_test_log)
-rel_rf_accuracy = accuracy_score(rel_Y_test, test_preds)
-print("Test accuracy:", rel_rf_accuracy)
-
-cm = confusion_matrix(rel_Y_test, val_preds)
-labels = abs_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Relative RF Classifier with Age as a Feature")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("unbalanced_sex_rel_rf_cm.png", format="png")
-plt.show()
-
-# Massive sex imbalance in the training set, attempting to rebalance
-# Balancing the training set
-# Absolute quant
-target_n = 585
-
-abs_balanced_train = (
-    abs_train
-    .groupby('sex', group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# Relative quant
-rel_balanced_train = (
-    rel_train
-    .groupby("sex", group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# # Splitting into features and targets
-# Absolute
-abs_X_train = (
-    abs_balanced_train[abs_balanced_train.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_balanced_train['age'])
-)
-abs_Y_train = abs_balanced_train['sex']
-
-abs_X_test = (
-    abs_test[abs_test.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_test['age'])
-)
-abs_Y_test = abs_test['sex']
-
-abs_X_val = (
-    abs_val[abs_val.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_val['age'])
-)
-abs_Y_val = abs_val['sex']
-
-# Absolute
-rel_X_train = (
-    rel_balanced_train[rel_balanced_train.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_train['age'])
-)
-rel_Y_train = rel_balanced_train['sex']
-
-rel_X_test = (
-    rel_test[rel_test.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=rel_test['age'])
-)
-rel_Y_test = rel_test['sex']
-
-rel_X_val = (
-    rel_val[rel_val.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=rel_val['age'])
-)
-rel_Y_val = rel_val['sex']
-
-
-# Preprocessing
-# Using log transform to standardize the data
-# Absolute quant data
-abs_X_train_log = abs_X_train.copy()
-abs_X_train_log = np.log1p(abs_X_train_log)
-
-abs_X_test_log = abs_X_test.copy()
-abs_X_test_log = np.log1p(abs_X_test_log)
-
-abs_X_val_log = abs_X_val.copy()
-abs_X_val_log = np.log1p(abs_X_val_log)
-
-# Relative abundance data
-rel_X_train_log = rel_X_train.copy()
-rel_X_train_log = np.log1p(rel_X_train_log)
-
-rel_X_test_log = rel_X_test.copy()
-rel_X_test_log = np.log1p(rel_X_test_log)
-
-rel_X_val_log = rel_X_val.copy()
-rel_X_val_log = np.log1p(rel_X_val_log)
-
-# Balanced absolute
-abs_bal_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    class_weight='balanced',
-    n_jobs=-1
-)
-abs_bal_rf.fit(abs_X_train_log, abs_Y_train)
-
-# Validation set
-val_preds = abs_bal_rf.predict(abs_X_val_log)
-print("Validation accuracy:", accuracy_score(abs_Y_val, val_preds))
-
-# Test set
-test_preds = abs_bal_rf.predict(abs_X_test_log)
-abs_bal_rf_accuracy = accuracy_score(abs_Y_test, test_preds)
-print("Test accuracy:", abs_bal_rf_accuracy)
-
-cm = confusion_matrix(abs_Y_test, test_preds)
-labels = abs_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Balanced Absolute RF Classifier with Age as a Feature")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("balanced_sex_abs_rf_cm.png", format="png")
-plt.show()
-
-# Balanced relative
-rel_bal_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    class_weight='balanced',
-    n_jobs=-1
-)
-rel_bal_rf.fit(rel_X_train_log, rel_Y_train)
-
-# Validation set
-val_preds = rel_bal_rf.predict(rel_X_val_log)
-print("Validation accuracy:", accuracy_score(rel_Y_val, val_preds))
-
-# Test set
-test_preds = rel_bal_rf.predict(rel_X_test_log)
-rel_bal_rf_accuracy = accuracy_score(rel_Y_test, test_preds)
-print("Test accuracy:", rel_bal_rf_accuracy)
-
-cm = confusion_matrix(rel_Y_test, test_preds)
-labels = rel_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Balanced Relative RF Classifier with Age as a Feature")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("balanced_sex_rel_rf_cm.png", format="png")
-plt.show()
-
-# Removing age as a feature
-# # Splitting into features and targets
-# Absolute quant data
-abs_X_train = abs_balanced_train[abs_train.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_train = abs_balanced_train['sex']
-
-abs_X_test = abs_test[abs_test.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_test  = abs_test['sex']
-
-abs_X_val = abs_val[abs_val.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_val  = abs_val['sex']
-
-# Relative abundance data
-rel_X_train = rel_balanced_train[rel_balanced_train.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_train = rel_balanced_train['sex']
-
-rel_X_test = rel_test[rel_test.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_test  = rel_test['sex']
-
-rel_X_val = rel_val[rel_val.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_val  = rel_val['sex']
-
-# Preprocessing
-# Using log transform to standardize the data
-# Absolute quant data
-abs_X_train_log = abs_X_train.copy()
-abs_X_train_log = np.log1p(abs_X_train_log)
-
-abs_X_test_log = abs_X_test.copy()
-abs_X_test_log = np.log1p(abs_X_test_log)
-
-abs_X_val_log = abs_X_val.copy()
-abs_X_val_log = np.log1p(abs_X_val_log)
-
-# Relative abundance data
-rel_X_train_log = rel_X_train.copy()
-rel_X_train_log = np.log1p(rel_X_train_log)
-
-rel_X_test_log = rel_X_test.copy()
-rel_X_test_log = np.log1p(rel_X_test_log)
-
-rel_X_val_log = rel_X_val.copy()
-rel_X_val_log = np.log1p(rel_X_val_log)
-
-# Balanced absolute with no age
-abs_bal_ageless_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    class_weight='balanced',
-    n_jobs=-1
-)
-abs_bal_ageless_rf.fit(abs_X_train_log, abs_Y_train)
-
-# Validation set
-val_preds = abs_bal_ageless_rf.predict(abs_X_val_log)
-print("Validation accuracy:", accuracy_score(abs_Y_val, val_preds))
-
-# Test set
-test_preds = abs_bal_ageless_rf.predict(abs_X_test_log)
-abs_bal_ageless_rf_accuracy = accuracy_score(abs_Y_test, test_preds)
-print("Test accuracy:", abs_bal_ageless_rf_accuracy)
-
-cm = confusion_matrix(abs_Y_test, test_preds)
-labels = abs_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Balanced Absolute RF Classifier without Age as a Feature")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("balanced_sex_abs_rf_ageless_cm.png", format="png")
-plt.show()
-
-# Balanced relative with no age
-rel_bal_ageless_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    class_weight='balanced',
-    n_jobs=-1
-)
-rel_bal_ageless_rf.fit(rel_X_train_log, rel_Y_train)
-
-# Validation set
-val_preds = rel_bal_ageless_rf.predict(rel_X_val_log)
-print("Validation accuracy:", accuracy_score(rel_Y_val, val_preds))
-
-# Test set
-test_preds = rel_bal_ageless_rf.predict(rel_X_test_log)
-rel_bal_ageless_rf_accuracy = accuracy_score(rel_Y_test, test_preds)
-print("Test accuracy:", rel_bal_ageless_rf_accuracy)
-
-cm = confusion_matrix(rel_Y_test, test_preds)
-labels = abs_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Balanced Relative RF Classifier without Age as a Feature")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("balanced_sex_rel_rf_ageless_cm.png", format="png")
-plt.show()
-
-# Removing columns with > 0.40 missing values
-threshold = 0.4
-features = abs_train.columns[:1148]
-frac_zeros = (abs_train[features] == 0).mean(axis=0)
-keep_cols = frac_zeros[frac_zeros <= threshold].index
-
-# # Splitting into features and targets
-# Absolute quant data
-abs_X_train = abs_balanced_train[keep_cols].drop(columns=['original_SampleID'])
-abs_Y_train = abs_balanced_train['sex']
-
-abs_X_test = abs_test[keep_cols].drop(columns=['original_SampleID'])
-abs_Y_test  = abs_test['sex']
-
-abs_X_val = abs_val[keep_cols].drop(columns=['original_SampleID'])
-abs_Y_val  = abs_val['sex']
-
-# Relative abundance data
-rel_X_train = rel_balanced_train[keep_cols].drop(columns=['original_SampleID'])
-rel_Y_train = rel_balanced_train['sex']
-
-rel_X_test = rel_test[keep_cols].drop(columns=['original_SampleID'])
-rel_Y_test  = rel_test['sex']
-
-rel_X_val = rel_val[keep_cols].drop(columns=['original_SampleID'])
-rel_Y_val  = rel_val['sex']
-
-# Preprocessing
-# Using log transform to standardize the data
-# Absolute quant data
-abs_X_train_log = abs_X_train.copy()
-abs_X_train_log = np.log1p(abs_X_train_log)
-
-abs_X_test_log = abs_X_test.copy()
-abs_X_test_log = np.log1p(abs_X_test_log)
-
-abs_X_val_log = abs_X_val.copy()
-abs_X_val_log = np.log1p(abs_X_val_log)
-
-# Relative abundance data
-rel_X_train_log = rel_X_train.copy()
-rel_X_train_log = np.log1p(rel_X_train_log)
-
-rel_X_test_log = rel_X_test.copy()
-rel_X_test_log = np.log1p(rel_X_test_log)
-
-rel_X_val_log = rel_X_val.copy()
-rel_X_val_log = np.log1p(rel_X_val_log)
-
-# Balanced absolute with no age
-abs_bal_ageless_miss_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    class_weight='balanced',
-    n_jobs=-1
-)
-abs_bal_ageless_miss_rf.fit(abs_X_train_log, abs_Y_train)
-
-# Validation set
-val_preds = abs_bal_ageless_miss_rf.predict(abs_X_val_log)
-print("Validation accuracy:", accuracy_score(abs_Y_val, val_preds))
-
-# Test set
-test_preds = abs_bal_ageless_miss_rf.predict(abs_X_test_log)
-abs_bal_ageless_miss_rf_accuracy = accuracy_score(abs_Y_test, test_preds)
-print("Test accuracy:", abs_bal_ageless_rf_accuracy)
-
-cm = confusion_matrix(abs_Y_test, test_preds)
-labels = abs_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Balanced Absolute RF Classifier without Age and > 40% Missing Columns")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("balanced_sex_abs_rf_ageless_miss_cm.png", format="png")
-plt.show()
-
-# Balanced relative with no age or missing columns
-rel_bal_ageless_miss_rf = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    class_weight='balanced',
-    n_jobs=-1
-)
-rel_bal_ageless_miss_rf.fit(rel_X_train_log, rel_Y_train)
-
-# Validation set
-val_preds = rel_bal_ageless_miss_rf.predict(rel_X_val_log)
-print("Validation accuracy:", accuracy_score(rel_Y_val, val_preds))
-
-# Test set
-test_preds = rel_bal_ageless_miss_rf.predict(rel_X_test_log)
-rel_bal_ageless_miss_rf_accuracy = accuracy_score(rel_Y_test, test_preds)
-print("Test accuracy:", rel_bal_ageless_rf_accuracy)
-
-cm = confusion_matrix(rel_Y_test, test_preds)
-labels = abs_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels
-)
-
-plt.xlabel("Predicted sex")
-plt.ylabel("Actual Sex")
-plt.title("Normalized Confusion Matrix for Balanced Relative RF Classifier without Age and > 40% Missing Columns")
-plt.xticks(rotation=45, ha="right")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("balanced_sex_rel_rf_ageless_miss_cm.png", format="png")
-plt.show()
-
-# Testing on balanced validation/test sets
-# Preprocessing train/test/val datasets
-abs_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_train.csv', low_memory=False)
-abs_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_test.csv', low_memory=False)
-abs_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_val.csv', low_memory=False)
-
-rel_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_train.csv', low_memory=False)
-rel_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_test.csv', low_memory=False)
-rel_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_val.csv', low_memory=False)
-
-# Stratifying by gender
-abs_train = abs_train[abs_train["sex"].isin(['male', 'female'])].copy()
-abs_val = abs_val[abs_val["sex"].isin(['male', 'female'])].copy()
-abs_test = abs_test[abs_test["sex"].isin(['male', 'female'])].copy()
-
-rel_train = rel_train[rel_train["sex"].isin(['male', 'female'])].copy()
-rel_val = rel_val[rel_val["sex"].isin(['male', 'female'])].copy()
-rel_test = rel_test[rel_test["sex"].isin(['male', 'female'])].copy()
-
-# Balancing the training set
-# Absolute quant
-target_n = 585
-
-abs_balanced_train = (
-    abs_train
-    .groupby('sex', group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# Relative quant
-rel_balanced_train = (
-    rel_train
-    .groupby("sex", group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# Balancing test
-# Absolute quant
-target_n = 210
-
-abs_balanced_test = (
-    abs_test
-    .groupby('sex', group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# Relative quant
-rel_balanced_test = (
-    rel_test
-    .groupby("sex", group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# Balancing validation
-# Absolute quant
-target_n = 196
-
-abs_balanced_val = (
-    abs_val
-    .groupby('sex', group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# Relative quant
-rel_balanced_val = (
-    rel_val
-    .groupby("sex", group_keys=False)
-    .apply(lambda x: x.sample(
-        n=min(len(x), target_n),
-        random_state=42
-    ))
-)
-
-# # Splitting into features and targets
-# Absolute
-abs_X_train = (
-    abs_balanced_train[abs_balanced_train.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_balanced_train['age'])
-)
-abs_Y_train = abs_balanced_train['sex']
-
-abs_X_bal_test = (
-    abs_balanced_test[abs_balanced_test.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_test['age'])
-)
-abs_Y_bal_test = abs_balanced_test['sex']
-
-abs_X_bal_val = (
-    abs_balanced_val[abs_balanced_val.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=abs_val['age'])
-)
-abs_Y_bal_val = abs_balanced_val['sex']
-
-# Absolute
-rel_X_train = (
-    rel_balanced_train[rel_balanced_train.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=rel_balanced_train['age'])
-)
-rel_Y_train = rel_balanced_train['sex']
-
-rel_X_bal_test = (
-    rel_balanced_test[rel_balanced_test.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=rel_test['age'])
-)
-rel_Y_bal_test = rel_balanced_test['sex']
-
-rel_X_bal_val = (
-    rel_balanced_val[rel_balanced_val.columns[:1148]]
-        .drop(columns=['original_SampleID'])
-        .assign(age=rel_val['age'])
-)
-rel_Y_bal_val = rel_balanced_val['sex']
-
-# Preprocessing
-# Using log transform to standardize the data
-# Absolute quant data
-abs_X_train_bal_log = abs_X_train.copy()
-abs_X_train_bal_log = np.log1p(abs_X_train_log)
-
-abs_X_test_bal_log = abs_X_bal_test.copy()
-abs_X_test_bal_log = np.log1p(abs_X_test_bal_log)
-
-abs_X_val_bal_log = abs_X_bal_val.copy()
-abs_X_val_bal_log = np.log1p(abs_X_val_bal_log)
-
-# Relative abundance data
-rel_X_train_bal_log = rel_X_train.copy()
-rel_X_train_bal_log = np.log1p(rel_X_train_log)
-
-rel_X_test_bal_log = rel_X_bal_test.copy()
-rel_X_test_bal_log = np.log1p(rel_X_test_log)
-
-rel_X_val_bal_log = rel_X_bal_val.copy()
-rel_X_val_bal_log = np.log1p(rel_X_val_bal_log)
-
-# Absolute
-abs_val_preds = abs_rf.predict(abs_X_val_bal_log)
-print("val accuracy:", accuracy_score(abs_Y_bal_val, abs_val_preds))
-
-abs_bal_val_preds = abs_bal_rf.predict(abs_X_val_bal_log)
-print("val accuracy:", accuracy_score(abs_Y_bal_val, abs_bal_val_preds))
-
-abs_X_val_bal_log_ageless = abs_X_val_bal_log.copy().drop(columns=['age'])
-abs_bal_ageless_val_preds = abs_bal_ageless_rf.predict(abs_X_val_bal_log_ageless)
-print("val accuracy:", accuracy_score(abs_Y_bal_val, abs_bal_ageless_val_preds))
-
-# Relative
-rel_val_preds = rel_rf.predict(rel_X_val_bal_log)
-print("val accuracy:", accuracy_score(rel_Y_bal_val, rel_val_preds))
-
-rel_bal_val_preds = rel_bal_rf.predict(rel_X_val_bal_log)
-print("val accuracy:", accuracy_score(abs_Y_bal_val, abs_bal_val_preds))
-
-rel_X_val_bal_log_ageless = rel_X_val_bal_log.copy().drop(columns=['age'])
-rel_bal_ageless_val_preds = rel_bal_ageless_rf.predict(rel_X_val_bal_log_ageless)
-print("val accuracy:", accuracy_score(rel_Y_bal_val, rel_bal_ageless_val_preds))
-
-# Final model evaluation
-print("TEST ACCURACY COMPARISON")
-
-print(f"{'Model':<35}{'Absolute':>12}{'Relative':>12}")
-print("-" * 60)
-
-print(f"{'RF (unbalanced)':<35}"
-      f"{abs_rf_accuracy:>12.4f}"
-      f"{rel_rf_accuracy:>12.4f}")
-
-print(f"{'RF (balanced)':<35}"
-      f"{abs_bal_rf_accuracy:>12.4f}"
-      f"{rel_bal_rf_accuracy:>12.4f}")
-
-print(f"{'RF (balanced, no age)':<35}"
-      f"{abs_bal_ageless_rf_accuracy:>12.4f}"
-      f"{rel_bal_ageless_rf_accuracy:>12.4f}")
-
-print(f"{'RF (balanced, no age/missing taxa)':<35}"
-      f"{abs_bal_ageless_miss_rf_accuracy:>12.4f}"
-      f"{rel_bal_ageless_miss_rf_accuracy:>12.4f}")
-
-print("\n=====================================================\n")
-
-# Removing age as a feature
-# # Splitting into features and targets
-# Absolute quant data
-abs_X_train = abs_balanced_train[abs_train.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_train = abs_balanced_train['sex']
-
-abs_X_test = abs_test[abs_test.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_test  = abs_test['sex']
-
-abs_X_val = abs_val[abs_val.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_val  = abs_val['sex']
-
-# Relative abundance data
-rel_X_train = rel_balanced_train[rel_balanced_train.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_train = rel_balanced_train['sex']
-
-rel_X_test = rel_test[rel_test.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_test  = rel_test['sex']
-
-rel_X_val = rel_val[rel_val.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_val  = rel_val['sex']
-
-# Preprocessing
-# Using log transform to standardize the data
-# Absolute quant data
-abs_X_train_log = abs_X_train.copy()
-abs_X_train_log = np.log1p(abs_X_train_log)
-
-abs_X_test_log = abs_X_test.copy()
-abs_X_test_log = np.log1p(abs_X_test_log)
-
-abs_X_val_log = abs_X_val.copy()
-abs_X_val_log = np.log1p(abs_X_val_log)
-
-# Relative abundance data
-rel_X_train_log = rel_X_train.copy()
-rel_X_train_log = np.log1p(rel_X_train_log)
-
-rel_X_test_log = rel_X_test.copy()
-rel_X_test_log = np.log1p(rel_X_test_log)
-
-rel_X_val_log = rel_X_val.copy()
-rel_X_val_log = np.log1p(rel_X_val_log)
-
-# Our best model is balanced with no age
-# Plotting
-fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-
-# Absolute
-abs_test_preds = abs_bal_ageless_rf.predict(abs_X_test_log)
-cm = confusion_matrix(abs_Y_test, abs_test_preds)
-labels = abs_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels,
-    ax=axes[0]
-)
-
-axes[0].set_xlabel("Predicted sex")
-axes[0].set_ylabel("Actual Sex")
-axes[0].set_xticklabels(labels, rotation=45, ha="right")
-axes[0].set_yticklabels(labels, rotation=0)
-axes[0].set_title("Normalized Confusion Matrix for Absolute RF Classifier")
-
-# Relative
-rel_test_preds = rel_bal_ageless_rf.predict(rel_X_test_log)
-cm = confusion_matrix(rel_Y_test, rel_test_preds)
-labels = rel_bal_rf.classes_
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-sns.heatmap(
-    cm_norm,
-    annot=True,
-    fmt=".2f",
-    cmap="Blues",
-    xticklabels=labels,
-    yticklabels=labels,
-    ax=axes[1]
-)
-
-axes[1].set_xlabel("Predicted sex")
-axes[1].set_ylabel("Actual Sex")
-axes[1].set_xticklabels(labels, rotation=45, ha="right")
-axes[1].set_yticklabels(labels, rotation=0)
-axes[1].set_title("Normalized Confusion Matrix for Relative RF Classifier")
-plt.savefig("sex_rf_cm_comparison.png", format="png")
-plt.tight_layout()
-plt.show()
-
-# Classification report
-print(classification_report(abs_Y_test, abs_test_preds))
-print(classification_report(rel_Y_test, rel_test_preds))
-
-# Plotting the Macro-AUC
-# Choosing male as the positive class
-pos_class = "male"
-abs_pos_index = list(abs_bal_ageless_rf.classes_).index(pos_class)
-rel_pos_index = list(rel_bal_ageless_rf.classes_).index(pos_class)
-
-abs_probs = abs_bal_ageless_rf.predict_proba(abs_X_test_log)[:, abs_pos_index]
-rel_probs = rel_bal_ageless_rf.predict_proba(rel_X_test_log)[:, rel_pos_index]
-
-abs_fpr, abs_tpr, _ = roc_curve(abs_Y_test, abs_probs, pos_label=pos_class)
-rel_fpr, rel_tpr, _ = roc_curve(rel_Y_test, rel_probs, pos_label=pos_class)
-
-abs_auc = auc(abs_fpr, abs_tpr)
-rel_auc = auc(rel_fpr, rel_tpr)
-
-# Plotting
-plt.figure(figsize=(8, 6))
-plt.plot(abs_fpr, abs_tpr,
-         label=f"Absolute RF (AUC = {abs_auc:.3f})")
-plt.plot(rel_fpr, rel_tpr,
-         label=f"Relative RF (AUC = {rel_auc:.3f})")
-plt.plot([0, 1], [0, 1], linestyle="--")
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
-plt.title(f"ROC Curve Comparison (Positive Class = {pos_class})")
-plt.legend()
-plt.tight_layout()
-plt.savefig("sex_rf_roc_comparison.png", format="png")
-plt.show()
-
-# Bootstrapping to see if results are significant
-n_boot = 1000
-rng = np.random.default_rng(42)
-
-acc_diffs = []
-auc_diffs = []
-
-y_abs_true = abs_Y_test.to_numpy()
-y_rel_true = rel_Y_test.to_numpy()
-
-y_abs_pred = abs_bal_ageless_rf.predict(abs_X_test_log)
-y_rel_pred = rel_bal_ageless_rf.predict(rel_X_test_log)
-
-abs_y_prob = abs_bal_ageless_rf.predict_proba(abs_X_test_log)[:, 1]
-rel_y_prob = rel_bal_ageless_rf.predict_proba(rel_X_test_log)[:, 1]
+
+DATA_DIR = '/ddn_scratch/k5zhao/data/classifier_training'
+TRAIN_TARGET_N = 585
+TEST_TARGET_N = 210
+VAL_TARGET_N = 196
+FEATURE_SLICE = 1148
+DROP_COL = 'original_SampleID'
+TARGET_COL = 'sex'
+AGE_COL = 'age'
+POS_CLASS = 'male'
+RANDOM_STATE = 42
+N_ESTIMATORS = 300
+ZERO_THRESHOLD = 0.40
+
+
+# -----------------------------------------------------------------------------
+# Data utilities
+# -----------------------------------------------------------------------------
+def load_split_frames(prefix):
+    return {
+        'train': pd.read_csv(f'{DATA_DIR}/{prefix}_train.csv', low_memory=False),
+        'test': pd.read_csv(f'{DATA_DIR}/{prefix}_test.csv', low_memory=False),
+        'val': pd.read_csv(f'{DATA_DIR}/{prefix}_val.csv', low_memory=False),
+    }
+
+
+def filter_binary_sex(df):
+    return df[df[TARGET_COL].isin(['male', 'female'])].copy()
+
+
+def load_dataset(prefix):
+    splits = load_split_frames(prefix)
+    for split_name in splits:
+        splits[split_name] = filter_binary_sex(splits[split_name])
+    return splits
+
+
+def get_base_feature_columns(df):
+    cols = list(df.columns[:FEATURE_SLICE])
+    return [col for col in cols if col != DROP_COL]
+
+
+def get_keep_cols_from_abs_train(abs_train, threshold=ZERO_THRESHOLD):
+    feature_cols = abs_train.columns[:FEATURE_SLICE]
+    frac_zeros = (abs_train[feature_cols] == 0).mean(axis=0)
+    keep_cols = list(frac_zeros[frac_zeros <= threshold].index)
+    return [col for col in keep_cols if col != DROP_COL]
+
+
+def balance_by_class(df, target_n):
+    return (
+        df.groupby(TARGET_COL, group_keys=False)
+          .apply(lambda x: x.sample(n=min(len(x), target_n), random_state=RANDOM_STATE))
+          .copy()
+    )
+
+
+def maybe_balance_splits(splits, balance_plan=None):
+    prepared = {}
+    for split_name, df in splits.items():
+        if balance_plan is not None and split_name in balance_plan:
+            prepared[split_name] = balance_by_class(df, balance_plan[split_name])
+        else:
+            prepared[split_name] = df.copy()
+    return prepared
+
+
+def build_xy(df, feature_cols, include_age):
+    X = df[feature_cols].copy()
+    if include_age:
+        X = X.assign(age=df[AGE_COL].values)
+    y = df[TARGET_COL].copy()
+    return X, y
+
+
+def build_feature_matrices(splits, feature_cols, include_age):
+    matrices = {}
+    for split_name, df in splits.items():
+        X, y = build_xy(df, feature_cols, include_age)
+        matrices[split_name] = {
+            'X': np.log1p(X),
+            'y': y,
+        }
+    return matrices
+
+
+# -----------------------------------------------------------------------------
+# Model utilities
+# -----------------------------------------------------------------------------
+def make_rf_model(use_class_weight):
+    kwargs = {
+        'n_estimators': N_ESTIMATORS,
+        'random_state': RANDOM_STATE,
+        'n_jobs': -1,
+    }
+    if use_class_weight:
+        kwargs['class_weight'] = 'balanced'
+    return RandomForestClassifier(**kwargs)
+
+
+def train_and_evaluate(train_X, train_y, val_X, val_y, test_X, test_y, use_class_weight):
+    model = make_rf_model(use_class_weight=use_class_weight)
+    model.fit(train_X, train_y)
+
+    val_preds = model.predict(val_X)
+    test_preds = model.predict(test_X)
+
+    val_accuracy = accuracy_score(val_y, val_preds)
+    test_accuracy = accuracy_score(test_y, test_preds)
+
+    print('Validation accuracy:', val_accuracy)
+    print('Test accuracy:', test_accuracy)
+
+    return {
+        'model': model,
+        'val_preds': val_preds,
+        'test_preds': test_preds,
+        'val_accuracy': val_accuracy,
+        'test_accuracy': test_accuracy,
+    }
+
+
+def plot_normalized_confusion_matrix(y_true, y_pred, labels, title, filename, ax=None):
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    row_sums = cm.sum(axis=1, keepdims=True)
+    row_sums[row_sums == 0] = 1
+    cm_norm = cm / row_sums
+
+    own_figure = ax is None
+    if own_figure:
+        plt.figure(figsize=(10, 8))
+        ax = plt.gca()
+
+    sns.heatmap(
+        cm_norm,
+        annot=True,
+        fmt='.2f',
+        cmap='Blues',
+        xticklabels=labels,
+        yticklabels=labels,
+        ax=ax,
+    )
+    ax.set_xlabel('Predicted sex')
+    ax.set_ylabel('Actual Sex')
+    ax.set_title(title)
+    ax.set_xticklabels(labels, rotation=45, ha='right')
+    ax.set_yticklabels(labels, rotation=0)
+
+    if own_figure:
+        plt.tight_layout()
+        plt.savefig(filename, format='png')
+        plt.show()
+
+
+def run_experiment(dataset_name, matrices, include_age, use_class_weight, title_stub, filename_stub):
+    results = train_and_evaluate(
+        matrices['train']['X'], matrices['train']['y'],
+        matrices['val']['X'], matrices['val']['y'],
+        matrices['test']['X'], matrices['test']['y'],
+        use_class_weight=use_class_weight,
+    )
+
+    plot_normalized_confusion_matrix(
+        matrices['test']['y'],
+        results['test_preds'],
+        results['model'].classes_,
+        title_stub,
+        filename_stub,
+    )
+
+    return results
+
+
+# -----------------------------------------------------------------------------
+# Analysis utilities
+# -----------------------------------------------------------------------------
+def print_accuracy_table(results_map):
+    print('TEST ACCURACY COMPARISON')
+    print(f"{'Model':<35}{'Absolute':>12}{'Relative':>12}")
+    print('-' * 60)
+    for label in [
+        'RF (unbalanced)',
+        'RF (balanced)',
+        'RF (balanced, no age)',
+        'RF (balanced, no age/missing taxa)',
+    ]:
+        print(
+            f"{label:<35}"
+            f"{results_map['abs'][label]['test_accuracy']:>12.4f}"
+            f"{results_map['rel'][label]['test_accuracy']:>12.4f}"
+        )
+    print('\n=====================================================\n')
+
+
+def print_balanced_validation_checks(models, balanced_eval_sets):
+    print('BALANCED VALIDATION CHECKS')
+    for dataset_name in ['abs', 'rel']:
+        X_val = balanced_eval_sets[dataset_name]['with_age']['val']['X']
+        y_val = balanced_eval_sets[dataset_name]['with_age']['val']['y']
+        preds = models[dataset_name]['RF (unbalanced)']['model'].predict(X_val)
+        print(f'{dataset_name} RF (unbalanced) val accuracy:', accuracy_score(y_val, preds))
+
+        preds = models[dataset_name]['RF (balanced)']['model'].predict(X_val)
+        print(f'{dataset_name} RF (balanced) val accuracy:', accuracy_score(y_val, preds))
+
+        X_val_ageless = balanced_eval_sets[dataset_name]['no_age']['val']['X']
+        y_val_ageless = balanced_eval_sets[dataset_name]['no_age']['val']['y']
+        preds = models[dataset_name]['RF (balanced, no age)']['model'].predict(X_val_ageless)
+        print(f'{dataset_name} RF (balanced, no age) val accuracy:', accuracy_score(y_val_ageless, preds))
+
+
+def plot_best_model_confusion_comparison(abs_result, rel_result, abs_test, rel_test):
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    plot_normalized_confusion_matrix(
+        abs_test['y'],
+        abs_result['test_preds'],
+        abs_result['model'].classes_,
+        'Normalized Confusion Matrix for Absolute RF Classifier',
+        filename=None,
+        ax=axes[0],
+    )
+    plot_normalized_confusion_matrix(
+        rel_test['y'],
+        rel_result['test_preds'],
+        rel_result['model'].classes_,
+        'Normalized Confusion Matrix for Relative RF Classifier',
+        filename=None,
+        ax=axes[1],
+    )
+
+    plt.tight_layout()
+    plt.savefig('sex_rf_cm_comparison.png', format='png')
+    plt.show()
+
+
+def plot_roc_comparison(abs_result, rel_result, abs_test, rel_test):
+    abs_pos_index = list(abs_result['model'].classes_).index(POS_CLASS)
+    rel_pos_index = list(rel_result['model'].classes_).index(POS_CLASS)
+
+    abs_probs = abs_result['model'].predict_proba(abs_test['X'])[:, abs_pos_index]
+    rel_probs = rel_result['model'].predict_proba(rel_test['X'])[:, rel_pos_index]
+
+    abs_fpr, abs_tpr, _ = roc_curve(abs_test['y'], abs_probs, pos_label=POS_CLASS)
+    rel_fpr, rel_tpr, _ = roc_curve(rel_test['y'], rel_probs, pos_label=POS_CLASS)
+
+    abs_auc = auc(abs_fpr, abs_tpr)
+    rel_auc = auc(rel_fpr, rel_tpr)
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(abs_fpr, abs_tpr, label=f'Absolute RF (AUC = {abs_auc:.3f})')
+    plt.plot(rel_fpr, rel_tpr, label=f'Relative RF (AUC = {rel_auc:.3f})')
+    plt.plot([0, 1], [0, 1], linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f'ROC Curve Comparison (Positive Class = {POS_CLASS})')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('sex_rf_roc_comparison.png', format='png')
+    plt.show()
+
+    return {
+        'abs_probs': abs_probs,
+        'rel_probs': rel_probs,
+        'abs_auc': abs_auc,
+        'rel_auc': rel_auc,
+    }
+
 
 def stratified_bootstrap_indices(y, rng):
     indices = []
-    classes = np.unique(y)
-
-    for c in classes:
-        class_idx = np.where(y == c)[0]
+    for cls in np.unique(y):
+        class_idx = np.where(y == cls)[0]
         boot_idx = rng.choice(class_idx, size=len(class_idx), replace=True)
         indices.extend(boot_idx)
-
     return np.array(indices)
 
-# Bootstrap
-for _ in range(n_boot):
 
-    indices = stratified_bootstrap_indices(y_abs_true, rng)
+def bootstrap_model_comparison(abs_result, rel_result, abs_test, rel_test, n_boot=1000):
+    rng = np.random.default_rng(RANDOM_STATE)
 
-    # Accuracy
-    acc_abs = accuracy_score(y_abs_true[indices], y_abs_pred[indices])
-    acc_rel = accuracy_score(y_rel_true[indices], y_rel_pred[indices])
-    acc_diffs.append(acc_abs - acc_rel)
+    y_abs_true = abs_test['y'].to_numpy()
+    y_rel_true = rel_test['y'].to_numpy()
+    y_abs_pred = abs_result['test_preds']
+    y_rel_pred = rel_result['test_preds']
 
-    # Binary AUC
-    auc_abs = roc_auc_score(y_abs_true[indices], abs_y_prob[indices])
-    auc_rel = roc_auc_score(y_rel_true[indices], rel_y_prob[indices])
-    auc_diffs.append(auc_abs - auc_rel)
+    abs_pos_index = list(abs_result['model'].classes_).index(POS_CLASS)
+    rel_pos_index = list(rel_result['model'].classes_).index(POS_CLASS)
+    abs_y_prob = abs_result['model'].predict_proba(abs_test['X'])[:, abs_pos_index]
+    rel_y_prob = rel_result['model'].predict_proba(rel_test['X'])[:, rel_pos_index]
 
-# Confidence Interval
-acc_ci = np.percentile(acc_diffs, [2.5, 97.5])
-auc_ci = np.percentile(auc_diffs, [2.5, 97.5])
+    acc_diffs = []
+    auc_diffs = []
 
-print("Accuracy difference 95% CI (Abs - Rel):", acc_ci)
-print("Macro-AUC difference 95% CI (Abs - Rel):", auc_ci)
+    for _ in range(n_boot):
+        indices = stratified_bootstrap_indices(y_abs_true, rng)
+        acc_abs = accuracy_score(y_abs_true[indices], y_abs_pred[indices])
+        acc_rel = accuracy_score(y_rel_true[indices], y_rel_pred[indices])
+        acc_diffs.append(acc_abs - acc_rel)
 
-# Interpretation
-if acc_ci[0] > 0 or acc_ci[1] < 0:
-    print("Accuracy difference is statistically significant.")
-else:
-    print("Accuracy difference is NOT statistically significant.")
+        auc_abs = roc_auc_score(y_abs_true[indices], abs_y_prob[indices])
+        auc_rel = roc_auc_score(y_rel_true[indices], rel_y_prob[indices])
+        auc_diffs.append(auc_abs - auc_rel)
 
-if auc_ci[0] > 0 or auc_ci[1] < 0:
-    print("AUC difference is statistically significant.")
-else:
-    print("AUC difference is NOT statistically significant.")
+    acc_ci = np.percentile(acc_diffs, [2.5, 97.5])
+    auc_ci = np.percentile(auc_diffs, [2.5, 97.5])
 
-# Feature importance
-abs_feat_importance = pd.DataFrame({
-    "feature": abs_X_train_log.columns,
-    "importance": abs_bal_ageless_rf.feature_importances_
-}).sort_values(by="importance", ascending=False)
+    print('Accuracy difference 95% CI (Abs - Rel):', acc_ci)
+    print('Macro-AUC difference 95% CI (Abs - Rel):', auc_ci)
 
-rel_feat_importance = pd.DataFrame({
-    "feature": rel_X_train_log.columns,
-    "importance": rel_bal_ageless_rf.feature_importances_
-}).sort_values(by="importance", ascending=False)
+    if acc_ci[0] > 0 or acc_ci[1] < 0:
+        print('Accuracy difference is statistically significant.')
+    else:
+        print('Accuracy difference is NOT statistically significant.')
 
-top_n = 20
+    if auc_ci[0] > 0 or auc_ci[1] < 0:
+        print('AUC difference is statistically significant.')
+    else:
+        print('AUC difference is NOT statistically significant.')
 
-plt.figure(figsize=(8,6))
-plt.barh(
-    abs_feat_importance["feature"][:top_n][::-1],
-    abs_feat_importance["importance"][:top_n][::-1]
-)
-plt.title("Top 20 Absolute Abundance Features")
-plt.xlabel("Importance")
-plt.tight_layout()
-plt.savefig("sex_abs_rf_top20_features.png", format="png")
-plt.show()
 
-top_n = 20
+def plot_feature_importance(model, train_X, title, filename, top_n=20):
+    feat_importance = pd.DataFrame({
+        'feature': train_X.columns,
+        'importance': model.feature_importances_,
+    }).sort_values(by='importance', ascending=False)
 
-plt.figure(figsize=(8,6))
-plt.barh(
-    rel_feat_importance["feature"][:top_n][::-1],
-    rel_feat_importance["importance"][:top_n][::-1]
-)
-plt.title("Top 20 Relative Abundance Features")
-plt.xlabel("Importance")
-plt.tight_layout()
-plt.savefig("sex_rel_rf_top20_features.png", format="png")
-plt.show()
+    plt.figure(figsize=(8, 6))
+    plt.barh(
+        feat_importance['feature'].head(top_n)[::-1],
+        feat_importance['importance'].head(top_n)[::-1],
+    )
+    plt.title(title)
+    plt.xlabel('Importance')
+    plt.tight_layout()
+    plt.savefig(filename, format='png')
+    plt.show()
 
-# Top 20 feature names
-abs_top20 = set(abs_feat_importance["feature"].head(20))
-rel_top20 = set(rel_feat_importance["feature"].head(20))
+    return feat_importance
 
-overlap = abs_top20.intersection(rel_top20)
-print("Overlap:", overlap)
-print("Number overlapping:", len(overlap))
-print("Unique to Absolute:", abs_top20 - rel_top20)
-print("Unique to Relative:", rel_top20 - abs_top20)
 
-# SHAP Analysis
-# Absolute
-X = abs_X_test_log.copy()
-X = X[abs_bal_ageless_rf.feature_names_in_]
+def print_top_feature_overlap(abs_feat_importance, rel_feat_importance, top_n=20):
+    abs_top = set(abs_feat_importance['feature'].head(top_n))
+    rel_top = set(rel_feat_importance['feature'].head(top_n))
+    overlap = abs_top.intersection(rel_top)
+    print('Overlap:', overlap)
+    print('Number overlapping:', len(overlap))
+    print('Unique to Absolute:', abs_top - rel_top)
+    print('Unique to Relative:', rel_top - abs_top)
 
-abs_explainer = shap.TreeExplainer(abs_bal_ageless_rf)
-abs_shap = abs_explainer(X)
 
-sv = abs_shap.values
-if sv.ndim == 3:
-    class_idx = 1
-    sv = sv[:, :, class_idx]
+def plot_shap_summary(model, X_test, title, filename):
+    X = X_test.copy()
+    X = X[model.feature_names_in_]
 
-plt.figure(figsize=(8, 6))
-shap.summary_plot(
-    sv, X,
-    plot_type="bar",
-    max_display=20,
-    show=False
-)
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer(X)
 
-ax = plt.gca()
-ax.set_title("SHAP Values - Absolute Abundance", fontsize=14, pad=12)
-plt.tight_layout()
-plt.savefig("sex_abs_rf_shap.png", format="png")
-plt.show()
+    sv = shap_values.values
+    if sv.ndim == 3:
+        class_idx = list(model.classes_).index(POS_CLASS)
+        sv = sv[:, :, class_idx]
 
-# Relative
-X = rel_X_test_log.copy()
-X = X[rel_bal_ageless_rf.feature_names_in_]
+    plt.figure(figsize=(8, 6))
+    shap.summary_plot(
+        sv,
+        X,
+        plot_type='bar',
+        max_display=20,
+        show=False,
+    )
+    ax = plt.gca()
+    ax.set_title(title, fontsize=14, pad=12)
+    plt.tight_layout()
+    plt.savefig(filename, format='png')
+    plt.show()
 
-rel_explainer = shap.TreeExplainer(rel_bal_ageless_rf)
-rel_shap = abs_explainer(X)
 
-sv = abs_shap.values
-if sv.ndim == 3:
-    class_idx = 1
-    sv = sv[:, :, class_idx]
+# -----------------------------------------------------------------------------
+# Main pipeline
+# -----------------------------------------------------------------------------
+def build_all_experiments(abs_splits, rel_splits):
+    abs_base_cols = get_base_feature_columns(abs_splits['train'])
+    rel_base_cols = get_base_feature_columns(rel_splits['train'])
+    keep_cols = get_keep_cols_from_abs_train(abs_splits['train'])
 
-plt.figure(figsize=(8, 6))
-shap.summary_plot(
-    sv, X,
-    plot_type="bar",
-    max_display=20,
-    show=False
-)
+    train_balanced_abs = maybe_balance_splits(abs_splits, {'train': TRAIN_TARGET_N})
+    train_balanced_rel = maybe_balance_splits(rel_splits, {'train': TRAIN_TARGET_N})
 
-ax = plt.gca()
-ax.set_title("SHAP Values - Relative Abundance", fontsize=14, pad=12)
-plt.tight_layout()
-plt.savefig("sex_rel_rf_shap.png", format="png")
-plt.show()
+    experiments = {
+        'RF (unbalanced)': {
+            'abs': build_feature_matrices(abs_splits, abs_base_cols, include_age=True),
+            'rel': build_feature_matrices(rel_splits, rel_base_cols, include_age=True),
+            'use_class_weight': False,
+            'title_templates': {
+                'abs': 'Normalized Confusion Matrix for Absolute RF Classifier with Age as a Feature',
+                'rel': 'Normalized Confusion Matrix for Relative RF Classifier with Age as a Feature',
+            },
+            'file_templates': {
+                'abs': 'unbalanced_sex_abs_rf_cm.png',
+                'rel': 'unbalanced_sex_rel_rf_cm.png',
+            },
+        },
+        'RF (balanced)': {
+            'abs': build_feature_matrices(train_balanced_abs, abs_base_cols, include_age=True),
+            'rel': build_feature_matrices(train_balanced_rel, rel_base_cols, include_age=True),
+            'use_class_weight': True,
+            'title_templates': {
+                'abs': 'Normalized Confusion Matrix for Balanced Absolute RF Classifier with Age as a Feature',
+                'rel': 'Normalized Confusion Matrix for Balanced Relative RF Classifier with Age as a Feature',
+            },
+            'file_templates': {
+                'abs': 'balanced_sex_abs_rf_cm.png',
+                'rel': 'balanced_sex_rel_rf_cm.png',
+            },
+        },
+        'RF (balanced, no age)': {
+            'abs': build_feature_matrices(train_balanced_abs, abs_base_cols, include_age=False),
+            'rel': build_feature_matrices(train_balanced_rel, rel_base_cols, include_age=False),
+            'use_class_weight': True,
+            'title_templates': {
+                'abs': 'Normalized Confusion Matrix for Balanced Absolute RF Classifier without Age as a Feature',
+                'rel': 'Normalized Confusion Matrix for Balanced Relative RF Classifier without Age as a Feature',
+            },
+            'file_templates': {
+                'abs': 'balanced_sex_abs_rf_ageless_cm.png',
+                'rel': 'balanced_sex_rel_rf_ageless_cm.png',
+            },
+        },
+        'RF (balanced, no age/missing taxa)': {
+            'abs': build_feature_matrices(train_balanced_abs, keep_cols, include_age=False),
+            'rel': build_feature_matrices(train_balanced_rel, keep_cols, include_age=False),
+            'use_class_weight': True,
+            'title_templates': {
+                'abs': 'Normalized Confusion Matrix for Balanced Absolute RF Classifier without Age and > 40% Missing Columns',
+                'rel': 'Normalized Confusion Matrix for Balanced Relative RF Classifier without Age and > 40% Missing Columns',
+            },
+            'file_templates': {
+                'abs': 'balanced_sex_abs_rf_ageless_miss_cm.png',
+                'rel': 'balanced_sex_rel_rf_ageless_miss_cm.png',
+            },
+        },
+    }
 
+    return experiments, keep_cols, abs_base_cols, rel_base_cols, train_balanced_abs, train_balanced_rel
+
+
+def build_balanced_eval_sets(abs_splits, rel_splits, abs_base_cols, rel_base_cols):
+    abs_balanced = maybe_balance_splits(
+        abs_splits,
+        {'train': TRAIN_TARGET_N, 'test': TEST_TARGET_N, 'val': VAL_TARGET_N},
+    )
+    rel_balanced = maybe_balance_splits(
+        rel_splits,
+        {'train': TRAIN_TARGET_N, 'test': TEST_TARGET_N, 'val': VAL_TARGET_N},
+    )
+
+    return {
+        'abs': {
+            'with_age': build_feature_matrices(abs_balanced, abs_base_cols, include_age=True),
+            'no_age': build_feature_matrices(abs_balanced, abs_base_cols, include_age=False),
+        },
+        'rel': {
+            'with_age': build_feature_matrices(rel_balanced, rel_base_cols, include_age=True),
+            'no_age': build_feature_matrices(rel_balanced, rel_base_cols, include_age=False),
+        },
+    }
+
+
+def main():
+    abs_splits = load_dataset('abs')
+    rel_splits = load_dataset('rel')
+
+    experiments, keep_cols, abs_base_cols, rel_base_cols, train_balanced_abs, train_balanced_rel = build_all_experiments(abs_splits, rel_splits)
+
+    results_map = {'abs': {}, 'rel': {}}
+    for label, config in experiments.items():
+        print(f'\n--- {label}: Absolute ---')
+        results_map['abs'][label] = run_experiment(
+            dataset_name='abs',
+            matrices=config['abs'],
+            include_age=('no age' not in label),
+            use_class_weight=config['use_class_weight'],
+            title_stub=config['title_templates']['abs'],
+            filename_stub=config['file_templates']['abs'],
+        )
+
+        print(f'\n--- {label}: Relative ---')
+        results_map['rel'][label] = run_experiment(
+            dataset_name='rel',
+            matrices=config['rel'],
+            include_age=('no age' not in label),
+            use_class_weight=config['use_class_weight'],
+            title_stub=config['title_templates']['rel'],
+            filename_stub=config['file_templates']['rel'],
+        )
+
+    balanced_eval_sets = build_balanced_eval_sets(abs_splits, rel_splits, abs_base_cols, rel_base_cols)
+    print_balanced_validation_checks(results_map, balanced_eval_sets)
+    print_accuracy_table(results_map)
+
+    best_abs = results_map['abs']['RF (balanced, no age)']
+    best_rel = results_map['rel']['RF (balanced, no age)']
+
+    best_abs_test = experiments['RF (balanced, no age)']['abs']['test']
+    best_rel_test = experiments['RF (balanced, no age)']['rel']['test']
+
+    plot_best_model_confusion_comparison(best_abs, best_rel, best_abs_test, best_rel_test)
+
+    print(classification_report(best_abs_test['y'], best_abs['test_preds']))
+    print(classification_report(best_rel_test['y'], best_rel['test_preds']))
+
+    plot_roc_comparison(best_abs, best_rel, best_abs_test, best_rel_test)
+    bootstrap_model_comparison(best_abs, best_rel, best_abs_test, best_rel_test, n_boot=1000)
+
+    abs_feat_importance = plot_feature_importance(
+        best_abs['model'],
+        experiments['RF (balanced, no age)']['abs']['train']['X'],
+        'Top 20 Absolute Abundance Features',
+        'sex_abs_rf_top20_features.png',
+        top_n=20,
+    )
+    rel_feat_importance = plot_feature_importance(
+        best_rel['model'],
+        experiments['RF (balanced, no age)']['rel']['train']['X'],
+        'Top 20 Relative Abundance Features',
+        'sex_rel_rf_top20_features.png',
+        top_n=20,
+    )
+    print_top_feature_overlap(abs_feat_importance, rel_feat_importance, top_n=20)
+
+    plot_shap_summary(
+        best_abs['model'],
+        best_abs_test['X'],
+        'SHAP Values - Absolute Abundance',
+        'sex_abs_rf_shap.png',
+    )
+    plot_shap_summary(
+        best_rel['model'],
+        best_rel_test['X'],
+        'SHAP Values - Relative Abundance',
+        'sex_rel_rf_shap.png',
+    )
+
+
+if __name__ == '__main__':
+    main()

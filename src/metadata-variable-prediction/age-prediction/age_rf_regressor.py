@@ -3,7 +3,7 @@
 import sys
 import os
 
-print(sys.executable) 
+print(sys.executable)
 
 env_root = sys.prefix
 
@@ -46,200 +46,208 @@ from sklearn.linear_model import LogisticRegression
 
 from scipy.interpolate import UnivariateSpline
 
-# Loading in absolute quant data for train/test/validation split
-# Should run log transformation
-abs_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_train.csv')
-abs_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_test.csv')
-abs_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_val.csv')
 
-rel_train = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_train.csv')
-rel_test = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_test.csv')
-rel_val = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/rel_val.csv')
+DATA_PATHS = {
+    "abs": {
+        "train": "/ddn_scratch/k5zhao/data/classifier_training/abs_train.csv",
+        "test": "/ddn_scratch/k5zhao/data/classifier_training/abs_test.csv",
+        "val": "/ddn_scratch/k5zhao/data/classifier_training/abs_val.csv",
+    },
+    "rel": {
+        "train": "/ddn_scratch/k5zhao/data/classifier_training/rel_train.csv",
+        "test": "/ddn_scratch/k5zhao/data/classifier_training/rel_test.csv",
+        "val": "/ddn_scratch/k5zhao/data/classifier_training/rel_val.csv",
+    },
+}
 
-# Creating X and Y features
-# Using American Gut Microbiome Project age cutoffs, remove outliers
-abs_train = abs_train.loc[(abs_train["age"] >= 20) & (abs_train["age"] <= 69)]
-abs_test = abs_test.loc[(abs_test["age"] >= 20) & (abs_test["age"] <= 69)]
-abs_val = abs_val.loc[(abs_val["age"] >= 20) & (abs_val["age"] <= 69)]
+AGE_MIN = 20
+AGE_MAX = 69
+FEATURE_COL_COUNT = 1148
+ID_COL = "original_SampleID"
+TARGET_COL = "age"
+RANDOM_STATE = 42
+N_ESTIMATORS = 300
 
-rel_train = rel_train.loc[(rel_train["age"] >= 20) & (rel_train["age"] <= 69)]
-rel_test = rel_test.loc[(rel_test["age"] >= 20) & (rel_test["age"] <= 69)]
-rel_val = rel_val.loc[(rel_val["age"] >= 20) & (rel_val["age"] <= 69)]
 
-# Absolute quant data
-abs_X_train = abs_train[abs_train.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_train = abs_train['age']
+def load_split_data(paths_by_split):
+    datasets = {}
+    for split_name, path in paths_by_split.items():
+        datasets[split_name] = pd.read_csv(path)
+    return datasets
 
-abs_X_test = abs_test[abs_test.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_test  = abs_test['age']
 
-abs_X_val = abs_val[abs_val.columns[:1148]].drop(columns=['original_SampleID'])
-abs_Y_val  = abs_val['age']
 
-# Relative abundance data
-rel_X_train = rel_train[rel_train.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_train = rel_train['age']
+def filter_age_range(df, age_col=TARGET_COL, min_age=AGE_MIN, max_age=AGE_MAX):
+    return df.loc[(df[age_col] >= min_age) & (df[age_col] <= max_age)].copy()
 
-rel_X_test = rel_test[rel_test.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_test  = rel_test['age']
 
-rel_X_val = rel_val[rel_val.columns[:1148]].drop(columns=['original_SampleID'])
-rel_Y_val  = rel_val['age']
 
-# Preprocessing
-# Using log transform to standardize the data
-# Absolute quant data
-abs_X_train_log = abs_X_train.copy()
-abs_X_train_log = np.log1p(abs_X_train_log)
+def select_feature_target(df, feature_col_count=FEATURE_COL_COUNT, id_col=ID_COL, target_col=TARGET_COL):
+    X = df[df.columns[:feature_col_count]].drop(columns=[id_col]).copy()
+    y = df[target_col].copy()
+    return X, y
 
-abs_X_test_log = abs_X_test.copy()
-abs_X_test_log = np.log1p(abs_X_test_log)
 
-abs_X_val_log = abs_X_val.copy()
-abs_X_val_log = np.log1p(abs_X_val_log)
 
-# Relative abundance data
-rel_X_train_log = rel_X_train.copy()
-rel_X_train_log = np.log1p(rel_X_train_log)
+def log_transform_splits(feature_splits):
+    transformed = {}
+    for split_name, X in feature_splits.items():
+        transformed[split_name] = np.log1p(X.copy())
+    return transformed
 
-rel_X_test_log = rel_X_test.copy()
-rel_X_test_log = np.log1p(rel_X_test_log)
 
-rel_X_val_log = rel_X_val.copy()
-rel_X_val_log = np.log1p(rel_X_val_log)
 
-# Absolute Quant Random Forest Regressor
-abs_rf_reg = RandomForestRegressor(
-    n_estimators=300,
-    random_state=42,
-    n_jobs=-1
-)
-abs_rf_reg.fit(abs_X_train_log, abs_Y_train)
-val_preds = abs_rf_reg.predict(abs_X_val_log)
+def prepare_dataset_group(paths_by_split, apply_log_transform=True):
+    raw_splits = load_split_data(paths_by_split)
+    filtered_splits = {}
+    feature_splits = {}
+    target_splits = {}
 
-mae = mean_absolute_error(abs_Y_val, val_preds)
-rmse = mean_squared_error(abs_Y_val, val_preds, squared=False)
-r2 = r2_score(abs_Y_val, val_preds)
+    for split_name, df in raw_splits.items():
+        filtered_df = filter_age_range(df)
+        filtered_splits[split_name] = filtered_df
+        X, y = select_feature_target(filtered_df)
+        feature_splits[split_name] = X
+        target_splits[split_name] = y
 
-print("MAE (years):", mae)
-print("RMSE (years):", rmse)
-print("R²:", r2)
+    if apply_log_transform:
+        feature_splits = log_transform_splits(feature_splits)
 
-plt.figure(figsize=(7, 7))
-plt.scatter(abs_Y_val, val_preds, alpha=0.5)
+    return {
+        "dataframes": filtered_splits,
+        "X": feature_splits,
+        "y": target_splits,
+    }
 
-# Perfect prediction line
-min_age = min(abs_Y_val.min(), val_preds.min())
-max_age = max(abs_Y_val.max(), val_preds.max())
-plt.plot([min_age, max_age], [min_age, max_age], linestyle="--")
-plt.xlabel("True Age")
-plt.ylabel("Predicted Age")
-plt.title("Predicted vs True Age (Validation Set)")
-plt.tight_layout()
-plt.show()
 
-# Trying the methodology from this paper: https://journals.asm.org/doi/10.1128/msystems.00630-19
-# Sort by age (required for spline stability)
-order = np.argsort(abs_Y_val)
-x = np.array(abs_Y_val)[order]
-y = np.array(val_preds)[order]
 
-# Fit smoothing spline
-spline = UnivariateSpline(
-    x,
-    y,
-    s=len(x) * np.var(y)
-)
+def build_random_forest_regressor(n_estimators=N_ESTIMATORS, random_state=RANDOM_STATE):
+    return RandomForestRegressor(
+        n_estimators=n_estimators,
+        random_state=random_state,
+        n_jobs=-1,
+    )
 
-# Expected microbiota age from spline
-expected_microbiota_age = spline(abs_Y_val)
 
-# Relative microbiota age
-relative_microbiota_age = val_preds - expected_microbiota_age
 
-val_results = pd.DataFrame({
-    "chronological_age": abs_Y_val,
-    "microbiota_age": val_preds,
-    "expected_microbiota_age": expected_microbiota_age,
-})
+def evaluate_regression(y_true, y_pred):
+    return {
+        "mae": mean_absolute_error(y_true, y_pred),
+        "rmse": mean_squared_error(y_true, y_pred, squared=False),
+        "r2": r2_score(y_true, y_pred),
+    }
 
-val_results["relative_microbiota_age"] = (
-    val_results["microbiota_age"] - 
-    val_results["expected_microbiota_age"]
-)
 
-# Plotting the spline
-plt.scatter(abs_Y_val, val_preds, alpha=0.4, label="Samples")
-plt.plot(x, spline(x), color="black", linewidth=2, label="Spline")
-plt.xlabel("Chronological age")
-plt.ylabel("Microbiota age")
-plt.legend()
-plt.show()
 
-# Relative Abundance Random Forest Regressor
-rel_rf_reg = RandomForestRegressor(
-    n_estimators=300,
-    random_state=42,
-    n_jobs=-1
-)
-rel_rf_reg.fit(rel_X_train, rel_Y_train)
+def print_metrics(metrics, dataset_label):
+    print(f"{dataset_label} MAE (years):", metrics["mae"])
+    print(f"{dataset_label} RMSE (years):", metrics["rmse"])
+    print(f"{dataset_label} R²:", metrics["r2"])
 
-val_preds = rel_rf_reg.predict(rel_X_val)
 
-mae = mean_absolute_error(rel_Y_val, val_preds)
-rmse = mean_squared_error(rel_Y_val, val_preds, squared=False)
-r2 = r2_score(rel_Y_val, val_preds)
 
-print("MAE (years):", mae)
-print("RMSE (years):", rmse)
-print("R²:", r2)
+def plot_predicted_vs_true(y_true, y_pred, title):
+    plt.figure(figsize=(7, 7))
+    plt.scatter(y_true, y_pred, alpha=0.5)
 
-plt.figure(figsize=(7, 7))
-plt.scatter(rel_Y_val, val_preds, alpha=0.5)
+    min_age = min(y_true.min(), y_pred.min())
+    max_age = max(y_true.max(), y_pred.max())
+    plt.plot([min_age, max_age], [min_age, max_age], linestyle="--")
+    plt.xlabel("True Age")
+    plt.ylabel("Predicted Age")
+    plt.title(title)
+    plt.tight_layout()
+    plt.show()
 
-# Perfect prediction line
-min_age = min(rel_Y_val.min(), val_preds.min())
-max_age = max(rel_Y_val.max(), val_preds.max())
-plt.plot([min_age, max_age], [min_age, max_age], linestyle="--")
-plt.xlabel("True Age")
-plt.ylabel("Predicted Age")
-plt.title("Predicted vs True Age (Validation Set)")
-plt.tight_layout()
-plt.show()
 
-# Sort by age (required for spline stability)
-order = np.argsort(rel_Y_val)
-x = np.array(rel_Y_val)[order]
-y = np.array(val_preds)[order]
 
-# Fit smoothing spline
-spline = UnivariateSpline(
-    x,
-    y,
-    s=len(x) * np.var(y)
-)
+def fit_relative_age_spline(y_true, y_pred):
+    order = np.argsort(y_true)
+    x_sorted = np.array(y_true)[order]
+    y_sorted = np.array(y_pred)[order]
 
-# Expected microbiota age from spline
-expected_microbiota_age = spline(rel_Y_val)
+    spline = UnivariateSpline(
+        x_sorted,
+        y_sorted,
+        s=len(x_sorted) * np.var(y_sorted),
+    )
+    return spline, x_sorted, y_sorted
 
-# Relative microbiota age
-relative_microbiota_age = val_preds - expected_microbiota_age
 
-val_results = pd.DataFrame({
-    "chronological_age": abs_Y_val,
-    "microbiota_age": val_preds,
-    "expected_microbiota_age": expected_microbiota_age,
-})
 
-val_results["relative_microbiota_age"] = (
-    val_results["microbiota_age"] - 
-    val_results["expected_microbiota_age"]
-)
+def build_relative_age_results(y_true, y_pred):
+    spline, x_sorted, y_sorted = fit_relative_age_spline(y_true, y_pred)
+    expected_microbiota_age = spline(y_true)
 
-# Plotting the spline
-plt.scatter(rel_Y_val, val_preds, alpha=0.4, label="Samples")
-plt.plot(x, spline(x), color="black", linewidth=2, label="Spline")
-plt.xlabel("Chronological age")
-plt.ylabel("Microbiota age")
-plt.legend()
-plt.show()
+    results = pd.DataFrame({
+        "chronological_age": y_true,
+        "microbiota_age": y_pred,
+        "expected_microbiota_age": expected_microbiota_age,
+    })
+    results["relative_microbiota_age"] = (
+        results["microbiota_age"] - results["expected_microbiota_age"]
+    )
+
+    return results, spline, x_sorted, y_sorted
+
+
+
+def plot_relative_age_spline(y_true, y_pred, spline, x_sorted):
+    plt.scatter(y_true, y_pred, alpha=0.4, label="Samples")
+    plt.plot(x_sorted, spline(x_sorted), color="black", linewidth=2, label="Spline")
+    plt.xlabel("Chronological age")
+    plt.ylabel("Microbiota age")
+    plt.legend()
+    plt.show()
+
+
+
+def run_regression_pipeline(dataset_label, dataset_group):
+    X_train = dataset_group["X"]["train"]
+    y_train = dataset_group["y"]["train"]
+    X_val = dataset_group["X"]["val"]
+    y_val = dataset_group["y"]["val"]
+
+    model = build_random_forest_regressor()
+    model.fit(X_train, y_train)
+
+    val_preds = model.predict(X_val)
+    metrics = evaluate_regression(y_val, val_preds)
+    print_metrics(metrics, dataset_label)
+
+    plot_predicted_vs_true(
+        y_val,
+        val_preds,
+        f"Predicted vs True Age ({dataset_label} Validation Set)",
+    )
+
+    val_results, spline, x_sorted, y_sorted = build_relative_age_results(y_val, val_preds)
+    plot_relative_age_spline(y_val, val_preds, spline, x_sorted)
+
+    return {
+        "model": model,
+        "metrics": metrics,
+        "predictions": val_preds,
+        "val_results": val_results,
+        "spline": spline,
+        "x_sorted": x_sorted,
+        "y_sorted": y_sorted,
+    }
+
+
+
+def main():
+    abs_dataset = prepare_dataset_group(DATA_PATHS["abs"], apply_log_transform=True)
+    rel_dataset = prepare_dataset_group(DATA_PATHS["rel"], apply_log_transform=True)
+
+    abs_results = run_regression_pipeline("Absolute Quant", abs_dataset)
+    rel_results = run_regression_pipeline("Relative Abundance", rel_dataset)
+
+    return {
+        "abs": abs_results,
+        "rel": rel_results,
+    }
+
+
+if __name__ == "__main__":
+    pipeline_results = main()
