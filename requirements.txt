@@ -1,0 +1,7 @@
+pandas
+numpy
+biom-format
+matplotlib
+seaborn
+scikit-learn
+scipy
