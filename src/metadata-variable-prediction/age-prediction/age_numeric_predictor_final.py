@@ -289,7 +289,7 @@ def plot_prediction_comparison(y_true_abs, pred_abs, y_true_rel, pred_rel, title
 
 
 
-def bootstrap_r2_difference(y_true, pred_abs, pred_rel, n_boot=5000):
+def bootstrap_mae_difference(y_true, pred_abs, pred_rel, n_boot=5000):
     rng = np.random.default_rng(RANDOM_STATE)
     diffs = []
     n = len(y_true)
@@ -299,15 +299,18 @@ def bootstrap_r2_difference(y_true, pred_abs, pred_rel, n_boot=5000):
         y_sample = y_true.iloc[idx]
         abs_sample = pred_abs[idx]
         rel_sample = pred_rel[idx]
-        diffs.append(r2_score(y_sample, rel_sample) - r2_score(y_sample, abs_sample))
+        diffs.append(
+            mean_absolute_error(y_sample, rel_sample)
+            - mean_absolute_error(y_sample, abs_sample)
+        )
 
     diffs = np.array(diffs)
     mean_diff = diffs.mean()
     ci_lower = np.percentile(diffs, 2.5)
     ci_upper = np.percentile(diffs, 97.5)
-    p_value = np.mean(diffs <= 0)
+    p_value = 2 * min(np.mean(diffs >= 0), np.mean(diffs <= 0))
 
-    print("Mean ΔR²:", mean_diff)
+    print("Mean ΔMAE:", mean_diff)
     print("95% CI:", ci_lower, "to", ci_upper)
     print("P-value:", p_value)
 
@@ -340,7 +343,7 @@ def run_paired_experiment(model_name, trainer, abs_bundle, rel_bundle, plot_conf
         plot_config["output_path"],
     )
 
-    bootstrap_stats = bootstrap_r2_difference(
+    bootstrap_stats = bootstrap_mae_difference(
         abs_bundle["Y_test"],
         abs_result["test_pred"],
         rel_result["test_pred"],

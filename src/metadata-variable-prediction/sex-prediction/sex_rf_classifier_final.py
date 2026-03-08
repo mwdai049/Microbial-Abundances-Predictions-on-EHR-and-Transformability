@@ -8,15 +8,6 @@ env_root = sys.prefix
 env_bin = os.path.join(env_root, "bin")
 os.environ["PATH"] = env_bin + os.pathsep + os.environ.get("PATH", "")
 
-import rpy2.robjects as ro
-from rpy2.robjects.packages import isinstalled
-env_r_lib = os.path.join(env_root, "lib", "R", "library")
-ro.r(f'.libPaths("{env_r_lib}")')
-
-print("R libPaths now:")
-print(ro.r(".libPaths()"))
-print("phyloseq installed?", isinstalled("phyloseq"))
-
 # imports for data analysis
 
 # data analysis
