@@ -1,7 +1,0 @@
-Task,Target,Representation,Model,Test_MAE,Test_R2,Test_RMSE
-Regression,age,Absolute,RandomForest,11.458184,0.302289,13.523546
-Regression,age,Absolute,GBR,10.281309,0.390214,12.880713
-Regression,age,Absolute,SVM_RBF,9.762966,0.438498,12.330885
-Regression,age,Relative,RandomForest,11.355181,0.310904,13.604623
-Regression,age,Relative,GBR,10.188036,0.404796,12.473238
-Regression,age,Relative,SVM_RBF,10.188036,0.404796,11.3856
