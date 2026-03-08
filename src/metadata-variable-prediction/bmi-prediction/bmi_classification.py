@@ -17,10 +17,10 @@ Pipeline Steps
       - keep columns starting with "G"
       - apply prevalence filter on TRAIN only
       - apply log10(x + 1) transform
-4. Train models on Absolute and Relative data:
+4. Train models on Absolute and Relative abundance data:
       - RandomForest
-      - HistGradientBoosting (with grid search)
-      - SVM (RBF kernel with grid search)
+      - HistGradientBoosting
+      - SVM (RBF kernel)
 5. Evaluate models using:
       - Accuracy
       - Macro / Weighted F1
@@ -28,7 +28,10 @@ Pipeline Steps
 6. Generate plots:
       - Confusion matrices
       - Multiclass ROC curves
-7. Save metrics and plots to disk.
+7. Perform statistical validation:
+      - Bootstrap significance testing comparing
+        Absolute vs Relative models
+8. Save metrics, plots, and trained models to disk.
 
 Output
 ------

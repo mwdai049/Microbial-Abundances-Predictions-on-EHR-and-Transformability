@@ -23,10 +23,10 @@ Pipeline Steps
       - keep columns starting with "G"
       - apply prevalence filter on TRAIN only
       - apply log10(x + 1) transform
-4. Train models on Absolute and Relative data:
+4. Train models on Absolute and Relative abundance data:
       - RandomForest
-      - HistGradientBoosting (with grid search)
-      - SVM (RBF kernel with grid search)
+      - HistGradientBoosting
+      - SVM (RBF kernel)
 5. Evaluate models using:
       - Accuracy
       - Macro / Weighted F1
@@ -34,7 +34,10 @@ Pipeline Steps
 6. Generate plots:
       - Confusion matrices
       - Multiclass ROC curves
-7. Save metrics and plots to disk.
+7. Perform statistical validation:
+      - Bootstrap significance testing comparing
+        Absolute vs Relative models
+8. Save metrics, plots, and trained models to disk.
 
 Output
 ------
@@ -42,7 +45,6 @@ The pipeline saves results to the directories specified by environment variables
 (or their default locations).
 
 Files generated:
-
     CONF_DIR/
         bowel_movement_clean_Absolute_<model>_confusion.png
         bowel_movement_clean_Relative_<model>_confusion.png
@@ -55,11 +57,6 @@ Files generated:
     MODEL_DIR/
         bowel_movement_clean_Absolute_<model>.joblib
         bowel_movement_clean_Relative_<model>.joblib
-
-Where:
-    - Confusion matrices show normalized classification performance.
-    - ROC plots show multiclass ROC curves with macro AUC.
-    - CSV file contains validation and test metrics for all models.
 
 Usage
 -----
