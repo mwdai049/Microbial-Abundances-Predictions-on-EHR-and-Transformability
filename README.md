@@ -1,15 +1,15 @@
 # Microbial Abundances Predictions on EHR and Transformability
 ## Credit
-This project was a collaboration between Monica Dai, Katelyn Zhao, Camille Sicat, Nathan Wang, and Sophie Wang at UC San Diego under the Halıcıoğlu Data Science Institute. Our work would not have been possible without the mentorship of Dr. Rob Knight and the assistance of the Knight Lab. 
+This project was a collaboration between Monica Dai, Katelyn Zhao, Camille Sicat, Nathan Wang, and Sophie Wang at UC San Diego under the Halıcıoğlu Data Science Institute. Our work would not have been possible without the mentorship of Dr. Rob Knight, Dr. Sam Degregori, and Michael Iter, and other members of the Knight Lab.
 
 ### Contributions
 **Monica Dai** ran the initial BIRDMAn analysis and also helped develop the model for predicting absolute abundance from relative abundance data. 
 
-**Camille Sicat** worked on developing the model for predicting age from microbiome data, and comparing the performance of absolute vs. relative abundance data. 
+**Camille Sicat** developed the models for predicting age and sex from microbiome data, and comparing the performance of absolute vs. relative abundance data. 
 
 **Nathan Wang** ran the ANCOM analysis on the absolute vs. relative abundance data and extensively helped write the report. 
 
-**Sophie Wang** worked on developing the model for predicting sex from microbiome data, and comparing the performance of absolute vs. relative abundance data. 
+**Sophie Wang** developed the models for predicting BMI and stool quality from microbiome data, and comparing the performance of absolute vs. relative abundance data. 
 
 **Katelyn Zhao** performed PCoA analysis on metadata features and also developed the model for predicting absolute abundance from relative abundance data. 
 
@@ -18,7 +18,7 @@ Most of the work was performed in the Knight Lab's Barnacle2 cluster. As such, t
 
 ## Setup
 ### QIIME 2
-To upload and process the data, you must install QIIME 2. We used the amplicon distribution, and the yml files are in the project directory. Make sure you have Conda or Mamba installed first (Miniconda, Anaconda, or Mambaforge).
+To upload and process the data, you must install QIIME 2. We used the moshpit distribution, and the yml files are in the project directory. Make sure you have Conda or Mamba installed first (Miniconda, Anaconda, or Mambaforge).
 
 ### Conda
 #### Linux/Windows WSL
@@ -37,12 +37,12 @@ conda activate qiime2-moshpit-2025.7
 Run:
 ```
 CONDA_SUBDIR=osx-64 conda env create \
-  --name qiime2-amplicon-2025.7 \
-  --file qiime2-environment-macos.yml
+  --name qiime2-moshpit-2025.7 \
+  --file qiime2-moshpit-latest-conda.yml
 ```
 Then:
 ```
-conda activate qiime2-amplicon-2025.7
+conda activate qiime2-moshpit-2025.7
 conda config --env --set subdir osx-64
 ```
 
@@ -50,12 +50,12 @@ conda config --env --set subdir osx-64
 Run:
 ```
 conda env create \
-  --name qiime2-amplicon-2025.7 \
-  --file qiime2-environment-macos.yml
+  --name qiime2-moshpit-2025.7 \
+  --file qiime2-moshpit-latest-conda.yml
 ```
 To activate, run: 
 ```
-conda activate qiime2-amplicon-2025.7
+conda activate qiime2-moshpit-2025.7
 ```
 
 ### Testing the installation
@@ -64,6 +64,13 @@ You can test your installation by running:
 conda deactivate
 conda activate qiime2-amplicon-2025.7
 qiime info
+```
+
+# Other dependencies
+Once your QIIME 2 environment is activated, install the remaining dependencies via pip:
+```
+conda activate qiime2-moshpit-2025.7
+pip install -r requirements.txt
 ```
 
 ## Data
@@ -94,7 +101,6 @@ out/
         sig_counts.png
       age-prediction/
         age-numeric-predictor/
-          age_reg_model_comparisons.csv
           gbr_comparison.png
           rbf_comparison.png
           rf_reg_comparison.png
@@ -121,11 +127,7 @@ out/
           retuned_rel_rf_cm.png
           retuned_rel_rf_roc.png
           rf_macro_auc_comparison.png
-        age-prediction-regressor/
-          abs_rf_reg.png
-          abs_rf_reg_spline.png
-          rel_rf_reg.png
-          rel_rf_reg_spline.png
+      age_reg_model_comparisons.csv
       sex-prediction/
         sex-prediction-other-models/
           sex_abs_lr_cm.png
@@ -168,18 +170,12 @@ src/
             ancombc_metaG_pergenome.py
     metadata-variable-prediction/
         age-prediction/
-          age_numeric_predictor_final.ipynb
           age_numeric_predictor_final.py
-          age_rf_classifier.ipynb
           age_rf_classifier.py
-          age_rf_regressor.ipynb
-          age_rf_regressor.py
         bmi-prediction/
           bmi_HGBR_rf_regressor.ipynb
         sex-rediction/
-          sex_lr_svm_final.ipynb
           sex_lr_svm_final.py
-          sex_rf_classifier_final.ipynb
           sex_rf_classifier_final.py
 qiime2-moshpit-macos-latest-conda.yml
 qiime2-moshpit-ubuntu-latest-conda.yml
