@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stool (Bowel Movement) Classification Pipeline
+Stool quality(Bowel Movement) Classification Pipeline
 
 Purpose
 -------
@@ -52,6 +52,10 @@ Files generated:
         bowel_movement_clean_Absolute_<model>_roc.png
         bowel_movement_clean_Relative_<model>_roc.png
 
+    MODEL_DIR/
+        bowel_movement_clean_Absolute_<model>.joblib
+        bowel_movement_clean_Relative_<model>.joblib
+
 Where:
     - Confusion matrices show normalized classification performance.
     - ROC plots show multiclass ROC curves with macro AUC.
@@ -71,11 +75,13 @@ Optional environment variables:
     DATA_DIR   path to input CSV files
     CONF_DIR   folder for confusion matrices
     ROC_DIR    folder for ROC plots
+    MODEL_DIR  folder for saved trained models
 
 Example with all variables:
     DATA_DIR="/ddn_scratch/k5zhao/data/classifier_training" \
     CONF_DIR="/home/zhw074/stool/confusion" \
     ROC_DIR="/home/zhw074/stool/roc_plots" \
+    MODEL_DIR="/home/zhw074/stool/models" \
     python stool_classification.py --model HGB
 """
 
@@ -83,6 +89,7 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
+import joblib
 
 import matplotlib
 matplotlib.use("Agg")
@@ -91,17 +98,15 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, f1_score, r2_score
-from sklearn.metrics import ConfusionMatrixDisplay, roc_curve, auc
+from sklearn.metrics import ConfusionMatrixDisplay, roc_curve, auc, roc_auc_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.base import clone
 from sklearn.preprocessing import LabelEncoder, label_binarize
 
-# ---------------------------
-# Config: data + outputs
-# ---------------------------
 DEFAULT_DATA_DIR = "/ddn_scratch/k5zhao/data/classifier_training"
 DEFAULT_CONF_DIR = "/home/zhw074/stool/confusion"
 DEFAULT_ROC_DIR  = "/home/zhw074/stool/roc_plots"
+DEFAULT_MODEL_DIR = "/home/zhw074/stool/models"
 
 def load_data(data_dir=None):
     """
@@ -169,6 +174,8 @@ def run_classification_experiments(
     abs_train, abs_val, abs_test,
     rel_train, rel_val, rel_test,
     prevalence_thresh=0.4,
+    selected_model="all",
+    model_dir=None,
 ):
 
     classifiers = {
@@ -210,6 +217,12 @@ def run_classification_experiments(
         },
     }
 
+    # ---- model switch (all vs single) ----
+    if selected_model != "all":
+        if selected_model not in classifiers:
+            raise ValueError(f"selected_model must be one of {['all'] + list(classifiers.keys())}")
+        classifiers = {selected_model: classifiers[selected_model]}
+
     reps = {
         "Absolute": (abs_train, abs_val, abs_test),
         "Relative": (rel_train, rel_val, rel_test),
@@ -217,6 +230,10 @@ def run_classification_experiments(
 
     all_results = []
     best_models = {}
+    best_params_summary = {}
+
+    if model_dir is not None:
+        os.makedirs(model_dir, exist_ok=True)
 
     for rep_name, (train_df, val_df, test_df) in reps.items():
 
@@ -250,13 +267,20 @@ def run_classification_experiments(
                 )
                 gs.fit(X_tr, y_tr)
                 model = gs.best_estimator_
+                print(f"Best parameters: {gs.best_params_}")
+                best_params_summary[(rep_name, model_name)] = gs.best_params_
             else:
                 model = clone(base_model)
                 model.fit(X_tr, y_tr)
+                best_params_summary[(rep_name, model_name)] = "default parameters"
 
             best_models[(rep_name, model_name)] = model
             best_models[(rep_name, model_name, "X_te")] = X_te
             best_models[(rep_name, model_name, "y_te")] = y_te
+
+            if model_dir is not None:
+                model_path = os.path.join(model_dir, f"{target_col}_{rep_name}_{model_name}.joblib")
+                joblib.dump(model, model_path)
 
             # Validation predictions
             y_va_pred = model.predict(X_va)
@@ -294,7 +318,7 @@ def run_classification_experiments(
             })
 
     results_df = pd.DataFrame(all_results)
-    return results_df, best_models
+    return results_df, best_models, best_params_summary
 
 # plotting
 def plot_cached_classification_results(
@@ -404,6 +428,55 @@ def plot_cached_multiclass_roc(
                 plt.close()
 
 
+def bootstrap_classification_test(y_true, pred_abs, pred_rel,
+                                  prob_abs=None, prob_rel=None,
+                                  n_boot=10000):
+
+    rng = np.random.default_rng(42)
+    n = len(y_true)
+
+    acc_diffs = []
+    auc_diffs = []
+
+    for _ in range(n_boot):
+
+        idx = rng.choice(n, n, replace=True)
+
+        y_sample = y_true[idx]
+        abs_sample = pred_abs[idx]
+        rel_sample = pred_rel[idx]
+
+        acc_abs = accuracy_score(y_sample, abs_sample)
+        acc_rel = accuracy_score(y_sample, rel_sample)
+
+        acc_diffs.append(acc_rel - acc_abs)
+
+        if prob_abs is not None:
+            try:
+                auc_abs = roc_auc_score(y_sample, prob_abs[idx], multi_class="ovr")
+                auc_rel = roc_auc_score(y_sample, prob_rel[idx], multi_class="ovr")
+
+                auc_diffs.append(auc_rel - auc_abs)
+
+            except ValueError:
+                # happens if bootstrap sample missing classes
+                continue
+
+    acc_diffs = np.array(acc_diffs)
+
+    print("\nBOOTSTRAP RESULTS")
+    print("------------------")
+    print("ΔAccuracy:", acc_diffs.mean())
+    print("95% CI:", np.percentile(acc_diffs, [2.5,97.5]))
+    print("p-value:", 2 * min(np.mean(acc_diffs <= 0), np.mean(acc_diffs >= 0)))
+
+    if len(auc_diffs) > 0:
+        auc_diffs = np.array(auc_diffs)
+        print("\nΔROC-AUC:", auc_diffs.mean())
+        print("95% CI:", np.percentile(auc_diffs,[2.5,97.5]))
+        print("p-value:", 2 * min(np.mean(auc_diffs <= 0), np.mean(auc_diffs >= 0)))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -443,7 +516,11 @@ def main():
     print("\n[abs_train bowel_movement_clean counts]")
     print(abs_train["bowel_movement_clean"].value_counts(dropna=False))
 
-    cls_stool_results, cls_stool_models = run_classification_experiments(
+    conf_dir = os.environ.get("CONF_DIR", DEFAULT_CONF_DIR)
+    roc_dir  = os.environ.get("ROC_DIR", DEFAULT_ROC_DIR)
+    model_dir = os.environ.get("MODEL_DIR", DEFAULT_MODEL_DIR)
+
+    cls_stool_results, cls_stool_models, best_params_summary = run_classification_experiments(
         target_col="bowel_movement_clean",
         abs_train=abs_train,
         abs_val=abs_val,
@@ -451,11 +528,10 @@ def main():
         rel_train=rel_train,
         rel_val=rel_val,
         rel_test=rel_test,
-        prevalence_thresh=args.prevalence
+        prevalence_thresh=args.prevalence,
+        selected_model=args.model,
+        model_dir=model_dir
     )
-
-    conf_dir = os.environ.get("CONF_DIR", DEFAULT_CONF_DIR)
-    roc_dir  = os.environ.get("ROC_DIR", DEFAULT_ROC_DIR)
 
     if args.model == "all":
         plot_models = ("RandomForest", "HGB", "SVM_RBF")
@@ -478,12 +554,60 @@ def main():
     )
 
     os.makedirs(conf_dir, exist_ok=True)
+    os.makedirs(roc_dir, exist_ok=True)
+    os.makedirs(model_dir, exist_ok=True)
+
     out_csv = os.path.join(conf_dir, f"cls_stool_results_{args.model}.csv")
     cls_stool_results.to_csv(out_csv, index=False)
 
+    print("\nRunning bootstrap significance tests...")
+
+    models = ("RandomForest", "HGB", "SVM_RBF")
+
+    for m in models:
+
+        if ("Absolute", m) not in cls_stool_models or ("Relative", m) not in cls_stool_models:
+            print(f"Skipping {m} (model not run)")
+            continue
+
+        model_abs = cls_stool_models[("Absolute", m)]
+        model_rel = cls_stool_models[("Relative", m)]
+
+        X_abs = cls_stool_models[("Absolute", m, "X_te")]
+        X_rel = cls_stool_models[("Relative", m, "X_te")]
+
+        y = cls_stool_models[("Absolute", m, "y_te")]
+
+        pred_abs = model_abs.predict(X_abs)
+        pred_rel = model_rel.predict(X_rel)
+
+        prob_abs = None
+        prob_rel = None
+
+        if hasattr(model_abs, "predict_proba"):
+            prob_abs = model_abs.predict_proba(X_abs)
+            prob_rel = model_rel.predict_proba(X_rel)
+
+        print(f"\n=== Bootstrap test: {m} ===")
+
+        bootstrap_classification_test(
+            y_true=np.array(y),
+            pred_abs=np.array(pred_abs),
+            pred_rel=np.array(pred_rel),
+            prob_abs=prob_abs,
+            prob_rel=prob_rel
+        )
+
     print("\nSaved confusion matrices to:", conf_dir)
     print("Saved ROC plots to:", roc_dir)
+    print("Saved models to:", model_dir)
     print("Saved metrics to:", out_csv)
+
+    print("\nBest hyperparameters for each model")
+    print("------------------------------------")
+    for (rep, model), params in best_params_summary.items():
+        print(f"{rep} - {model}: {params}")
+
     print("\nResults preview:")
     print(cls_stool_results)
 

@@ -35,6 +35,10 @@ Files generated:
         bmi_Absolute_<model>.png
         bmi_Relative_<model>.png
         reg_bmi_results_<model>.csv
+
+    MODEL_DIR/
+        bmi_Absolute_<model>.joblib
+        bmi_Relative_<model>.joblib
         
 Usage
 -----
@@ -49,10 +53,12 @@ Run a single model:
 Optional environment variables
     DATA_DIR    Path to input CSV files.
     PLOT_DIR    Directory where regression plots and metrics will be saved.
+    MODEL_DIR   folder for saved trained models
 
 Example with all variables:
     DATA_DIR="/ddn_scratch/k5zhao/data/classifier_training" \
     PLOT_DIR="/home/zhw074/bmi/regression_plots" \
+    MODEL_DIR="/home/zhw074/bmi/models" \
     python bmi_regression.py --model HGB
 """
 
@@ -60,6 +66,7 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
+import joblib
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -79,6 +86,7 @@ from sklearn.preprocessing import LabelEncoder
 
 DEFAULT_DATA_DIR = "/ddn_scratch/k5zhao/data/classifier_training"
 DEFAULT_PLOT_DIR = "/home/zhw074/bmi/regression_plots"
+DEFAULT_MODEL_DIR = "/home/zhw074/bmi/models"
 
 def load_data(data_dir=None):
     """
@@ -129,6 +137,7 @@ def run_regression_experiments(
     rel_train, rel_val, rel_test,
     prevalence_thresh=0.4,
     selected_model="all",
+    model_dir=None,
 ):
     """
     Run regression models on absolute vs relative representations.
@@ -208,6 +217,10 @@ def run_regression_experiments(
 
     all_results = []
     best_models = {}
+    best_params_summary = {}
+
+    if model_dir is not None:
+        os.makedirs(model_dir, exist_ok=True)
 
     for rep_name, (train_df, val_df, test_df, y_tr, y_va, y_te) in reps.items():
 
@@ -238,14 +251,20 @@ def run_regression_experiments(
                 gs.fit(X_tr, y_tr)
                 model = gs.best_estimator_
                 print(f"Best parameters: {gs.best_params_}")
+                best_params_summary[(rep_name, model_name)] = gs.best_params_
             else:
                 model = clone(base_model)
                 model.fit(X_tr, y_tr)
+                best_params_summary[(rep_name, model_name)] = "default parameters"
 
             # Cache model + test data
             best_models[(rep_name, model_name)] = model
             best_models[(rep_name, model_name, "X_te")] = X_te
             best_models[(rep_name, model_name, "y_te")] = y_te
+
+            if model_dir is not None:
+                model_path = os.path.join(model_dir, f"{target_col}_{rep_name}_{model_name}.joblib")
+                joblib.dump(model, model_path)
 
             # Validation metrics
             y_va_pred = model.predict(X_va)
@@ -276,7 +295,7 @@ def run_regression_experiments(
             )
 
     results_df = pd.DataFrame(all_results)
-    return results_df, best_models
+    return results_df, best_models, best_params_summary
 
 # plotting
 def plot_cached_regression_results(
@@ -339,6 +358,44 @@ def plot_cached_regression_results(
                 plt.close()
 
 
+def bootstrap_regression_test(y_true, pred_abs, pred_rel, n_boot=10000):
+
+    rng = np.random.default_rng(42)
+    n = len(y_true)
+
+    mae_diffs = []
+    r2_diffs = []
+
+    for _ in range(n_boot):
+
+        idx = rng.choice(n, n, replace=True)
+
+        y_sample = y_true[idx]
+        abs_sample = pred_abs[idx]
+        rel_sample = pred_rel[idx]
+
+        mae_abs = mean_absolute_error(y_sample, abs_sample)
+        mae_rel = mean_absolute_error(y_sample, rel_sample)
+        mae_diffs.append(mae_rel - mae_abs)
+
+        r2_abs = r2_score(y_sample, abs_sample)
+        r2_rel = r2_score(y_sample, rel_sample)
+        r2_diffs.append(r2_rel - r2_abs)
+
+    mae_diffs = np.array(mae_diffs)
+    r2_diffs = np.array(r2_diffs)
+
+    print("\nBOOTSTRAP RESULTS")
+    print("------------------")
+    print("ΔMAE:", mae_diffs.mean())
+    print("95% CI:", np.percentile(mae_diffs, [2.5, 97.5]))
+    print("p-value:", 2 * min(np.mean(mae_diffs <= 0), np.mean(mae_diffs >= 0)))
+
+    print("\nΔR²:", r2_diffs.mean())
+    print("95% CI:", np.percentile(r2_diffs, [2.5, 97.5]))
+    print("p-value:", 2 * min(np.mean(r2_diffs <= 0), np.mean(r2_diffs >= 0)))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -359,7 +416,7 @@ def main():
     abs_train, abs_val, abs_test, rel_train, rel_val, rel_test = load_data()
 
     # Run experiments
-    reg_bmi_results, reg_bmi_models = run_regression_experiments(
+    reg_bmi_results, reg_bmi_models, best_params_summary = run_regression_experiments(
         target_col="bmi",
         abs_train=abs_train,
         abs_val=abs_val,
@@ -369,10 +426,12 @@ def main():
         rel_test=rel_test,
         prevalence_thresh=args.prevalence,
         selected_model=args.model,
+        model_dir=os.environ.get("MODEL_DIR", DEFAULT_MODEL_DIR),
     )
 
     # Plot directory
     plot_dir = os.environ.get("PLOT_DIR", DEFAULT_PLOT_DIR)
+    model_dir = os.environ.get("MODEL_DIR", DEFAULT_MODEL_DIR)
 
     # Decide which plots to generate (all vs one)
     if args.model == "all":
@@ -388,11 +447,50 @@ def main():
     )
 
     # Save results table (helpful for batch runs)
+    os.makedirs(plot_dir, exist_ok=True)
+    os.makedirs(model_dir, exist_ok=True)
+
     out_csv = os.path.join(plot_dir, f"reg_bmi_results_{args.model}.csv")
     reg_bmi_results.to_csv(out_csv, index=False)
 
+    print("\nRunning bootstrap significance tests...")
+
+    models = ("RandomForest", "HGB", "SVM_RBF")
+
+    for m in models:
+
+        if ("Absolute", m) not in reg_bmi_models or ("Relative", m) not in reg_bmi_models:
+            print(f"Skipping {m} (model not run)")
+            continue
+
+        model_abs = reg_bmi_models[("Absolute", m)]
+        model_rel = reg_bmi_models[("Relative", m)]
+
+        X_abs = reg_bmi_models[("Absolute", m, "X_te")]
+        X_rel = reg_bmi_models[("Relative", m, "X_te")]
+
+        y = reg_bmi_models[("Absolute", m, "y_te")]
+
+        pred_abs = model_abs.predict(X_abs)
+        pred_rel = model_rel.predict(X_rel)
+
+        print(f"\n=== Bootstrap test: {m} ===")
+
+        bootstrap_regression_test(
+            y_true=np.array(y),
+            pred_abs=np.array(pred_abs),
+            pred_rel=np.array(pred_rel)
+        )
+
     print("\nSaved plots to:", plot_dir)
+    print("Saved models to:", model_dir)
     print("Saved metrics to:", out_csv)
+
+    print("\nBest hyperparameters for each model")
+    print("------------------------------------")
+    for (rep, model), params in best_params_summary.items():
+        print(f"{rep} - {model}: {params}")
+
     print("\nResults preview:")
     print(reg_bmi_results)
 
