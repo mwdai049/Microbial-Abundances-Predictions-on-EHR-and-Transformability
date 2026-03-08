@@ -4,59 +4,37 @@ BMI Regression Pipeline
 
 Purpose
 -------
-Predict continuous BMI from microbiome features using two abundance tables:
+Predict continuous BMI from microbiome features using two abundance data:
     1. Absolute abundance
     2. Relative abundance
-
-This pipeline compares predictive performance between the two data
-representations and evaluates whether differences are statistically
-significant using bootstrap testing.
 
 Pipeline Steps
 --------------
 1. Load train / validation / test datasets.
-
 2. Preprocess microbiome features:
       - keep columns starting with "G"
       - apply prevalence filter on TRAIN only
       - apply log10(x + 1) transform
-
-3. Train regression models on Absolute and Relative data:
+3. Train models on Absolute and Relative abundance data:
       - RandomForest
-      - HistGradientBoosting (with grid search)
-      - SVM (RBF kernel with grid search)
-
-4. Hyperparameter tuning
-      - GridSearchCV is applied to HGB and SVM models
-      - best parameters are recorded and printed
-
-5. Evaluate models using:
-      - R² (coefficient of determination)
+      - HistGradientBoosting
+      - SVM (RBF kernel)
+4. Evaluate models using:
+      - R²
       - Mean Absolute Error (MAE)
-
-6. Generate prediction plots:
+5. Generate plots:
       - True BMI vs Predicted BMI
-      - saved as PNG figures
-
-7. Statistical validation:
-      - Bootstrap significance testing compares Absolute vs Relative models
-      - metrics evaluated:
-            ΔMAE
-            ΔR²
-      - reports mean difference, 95% confidence interval, and p-value
-
-8. Save outputs:
-      - trained models
-      - evaluation plots
-      - metrics tables
+6. Perform statistical validation:
+      - Bootstrap significance testing comparing
+        Absolute vs Relative models
+7. Save metrics, plots, and trained models to disk.
 
 Output
 ------
-The pipeline saves results to the directory specified by PLOT_DIR
-(or the default location if not provided).
+The pipeline saves results to the directories specified by environment variables
+(or their default locations).
 
 Files generated:
-
     PLOT_DIR/
         bmi_Absolute_<model>.png
         bmi_Relative_<model>.png
@@ -65,10 +43,6 @@ Files generated:
     MODEL_DIR/
         bmi_Absolute_<model>.joblib
         bmi_Relative_<model>.joblib
-
-Additionally printed to console:
-    - bootstrap significance test results
-    - best hyperparameters for each trained model
 
 Usage
 -----
@@ -80,17 +54,16 @@ Run a single model:
     python bmi_regression.py --model HGB
     python bmi_regression.py --model SVM_RBF
 
-Optional environment variables
+Optional environment variables:
     DATA_DIR    Path to input CSV files.
     PLOT_DIR    Directory where regression plots and metrics will be saved.
-    MODEL_DIR   Directory where trained models will be saved.
+    MODEL_DIR   folder for saved trained models
 
-Example
--------
-DATA_DIR="/ddn_scratch/k5zhao/data/classifier_training" \
-PLOT_DIR="/home/zhw074/bmi/regression_plots" \
-MODEL_DIR="/home/zhw074/bmi/models" \
-python bmi_regression.py --model HGB
+Example with all variables:
+    DATA_DIR="/ddn_scratch/k5zhao/data/classifier_training" \
+    PLOT_DIR="/home/zhw074/bmi/regression_plots" \
+    MODEL_DIR="/home/zhw074/bmi/models" \
+    python bmi_regression.py --model HGB
 """
 
 import os
