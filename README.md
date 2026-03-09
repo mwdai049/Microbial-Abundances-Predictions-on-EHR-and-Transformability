@@ -3,20 +3,6 @@
 ## Project Overview
 This project investigates how microbiome abundance data can be used for biological interpretation and machine learning. We compare **relative** and **absolute** abundance representations, study how differential abundance methods behave across metadata groups, and test whether host metadata such as age, BMI, sex, and stool quality can be predicted from microbial profiles. We also explore whether absolute abundance can be reconstructed from relative abundance.
 
-## Table of Contents
-
-- [Setup] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#setup)
-- [Data] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#data)
-- [Directory structure] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#directory-structure)
-- Project Scripts
-  - [Differential Abundance] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#differential-abundance-analysis)
-  - [Metadata Variable Prediction] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#metadata-variable-prediction)
-    - [Age] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#age)
-    - [BMI] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#BMI)
-    - [Sex] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#sex)
-    - [Stool Quality] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#stool-quality)
-  - [Absolute Abundance Modeling] (https://github.com/mwdai049/Microbial-Abundances-Predictions-on-EHR-and-Transformability?tab=readme-ov-file#modeling-absolute-abundance)
-
 ## Setup
 ### QIIME 2
 To upload and process the data, you must install QIIME 2. We used the moshpit distribution, and the yml files are in the project directory. Make sure you have Conda or Mamba installed first (Miniconda, Anaconda, or Mambaforge).
