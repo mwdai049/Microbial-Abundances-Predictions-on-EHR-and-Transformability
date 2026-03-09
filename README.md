@@ -1,7 +1,7 @@
 # Microbial Abundances Predictions on EHR and Transformability
 
 ## Project Overview
-This project investigates how microbiome abundance data can be used for biological interpretation and machine learning. We compare **relative** and **absolute** abundance representations, study how differential abundance methods behave across metadata groups, and test whether host metadata such as age, BMI, sex, and stool quality can be predicted from microbial profiles. We also explore whether absolute abundance can be reconstructed from relative abundance.
+This project investigates how microbiome abundance data can be used for biological interpretation and machine learning. We compare **relative** and **absolute** abundance representations, study how differential abundance methods behave across metadata groups, and test whether host metadata such as age, BMI, sex, and bowel movement can be predicted from microbial profiles. We also explore whether absolute abundance can be reconstructed from relative abundance.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ This project investigates how microbiome abundance data can be used for biologic
     - [Age](#age)
     - [BMI](#bmi)
     - [Sex](#sex)
-    - [Stool Quality](#stool-quality)
+    - [Bowel movement](#bowel-movement)
   - [Absolute Abundance Modeling](#modeling-absolute-abundance)
 - [Credit](#credit)
 - [Contributions](#contributions)
@@ -246,7 +246,7 @@ The primary output is found here: ```out/figs/BIRDMAn/birdman_heatmaps.png```
 You can find the scripts to predict different metadata variables in ```src/metadata-variable-prediction```. 
 
 ### Plate diagnosis
-You can find the script for diagnosing bias in different sampling plates in  ```bmi-stool-model-analysis/bmi_stool_prediction_complete_analysis.ipynb```. The SHAP analysis was performed in ```bmi-stool-model-analysis/shap_analysis.py```.
+You can find the script for diagnosing bias in different sampling plates in  ```bmi-bowel-model-analysis/bmi_bowel_prediction_complete_analysis.ipynb```. The SHAP analysis was performed in ```bmi-bowel-model-analysis/shap_analysis.py```.
 
 ### Age
 ```age-prediction``` contains two scripts: ```age_numeric_predictor_final.py``` and ```age_rf_classifier.py```. 
