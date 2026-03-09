@@ -242,6 +242,8 @@ This directory contains four scripts:
   * This scripts runs a series of non linear models for performance comparison.
 * ```pacbio_modeling.py```
   * This script runs the best performing model on a new, independent dataset and perform subsampling on the original dataset for comparison.
+* ```predicted_table_evaluation.py```
+  * This script runs a series of tests and visualizations to evaluate the synthetic absolute abundance data.
 
 To run any of these scripts, run:
 ```
