@@ -248,9 +248,26 @@ To run any of these scripts, run:
 python filename.py
 ```
 
-The resulting figures can be found in ```out/figs/absolute-abundance-modeling```.
+The following figures are produced and can be found in ```out/figs/absolute-abundance-modeling```:
 
-The resulting model metrics can be found in ```out/tables/absolute-abundance-modeling```
+| File | Description |
+|---|---|
+| `best_model_training.png` | Training progress of the best model |
+| `nph_subsampled_residuals.png` | Residual plot for model trained on subsampled data |
+| `nph_subsampled_true_vs_pred.png` | True vs. Pred scatter plot for model trained on subsampled data |
+| `pacbio_residuals.png` | Residual plot for model trained on new dataset |
+| `pacbio_true_vs_pred.png` | True vs. Pred scatter plot for model trained on new dataset |
+| `residuals.png` | Residual plot for best model |
+| `true_vs_pred.png` | True vs. Pred scatter plot for best model |
+| `validation_curves.png` | Training progress for all non linear models tested |
+
+The following metrics are produced as tables and can be found in ```out/tables/absolute-abundance-modeling```:
+
+| File | Description |
+|---|---|
+| `best_model_metrics.csv` | Training, validation, and testing $R^2$, RMSE, and MAE for the best model |
+| `model_summary.csv` | Training, validation, and testing $R^2$, RMSE, and MAE across all tested non linear models |
+| `pacbio_metrics_summary.csv` | Training, validation, and testing $R^2$, RMSE, and MAE for models trained on the new data and the subsampled data |
 
 ## Credit
 This project was a collaboration between Monica Dai, Katelyn Zhao, Camille Sicat, Nathan Wang, and Sophie Wang at UC San Diego under the Halıcıoğlu Data Science Institute. Our work would not have been possible without the mentorship of Dr. Rob Knight, Dr. Sam Degregori, and Michael Iter, and other members of the Knight Lab.
