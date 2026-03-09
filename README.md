@@ -138,7 +138,9 @@ The analysis expects the following input files:
 - **Estimated absolute abundance table** (`.tsv`): Synthetic/estimated absolute abundance training data
 - **Taxonomy annotations** (`.tsv`): WoLR2 taxonomy file mapping feature IDs to taxonomic ranks
 
-### Running the Analysis
+---
+
+### ANCOM-BC
 
 The script and notebook for the differential abundance analysis can be found in:
 
@@ -152,17 +154,15 @@ The analysis runs ANCOM-BC across three feature table types — **relative**, **
 bowel_movement + bowel_movement_quality + age_bin + bmi_bin + sex
 ```
 
-Reference levels are: female sex, Type 3/4 stool, age 40–49, and normal BMI. A prevalence cutoff of 10% (`prv_cut = 0.10`) and Benjamini–Hochberg FDR correction are applied. PERMANOVA (via R's `vegan::adonis2`, marginal by-term) is also run on Bray–Curtis distances to assess overall community-level variance explained by each metadata factor.
+Reference levels are: female sex, Type 3/4 stool, age 40–49, and normal BMI. A prevalence cutoff of 10% (`prv_cut = 0.10`) and Benjamini–Hochberg FDR correction are applied.
 
-### Outputs
+#### ANCOM-BC Outputs
 
 Results figures are saved to:
 
 ```
 out/figs/ANCOM-BC/
 ```
-
-The following figures are produced:
 
 | File | Description |
 |---|---|
@@ -173,7 +173,38 @@ The following figures are produced:
 | `ancom-bc-final_heatmaps.png` | 3-panel species-level heatmap (age, BMI, bowel movement quality) for poster |
 | `ancombc_age_trends.png` | Genus LFC trend lines across age bins |
 | `ancombc_bmi_trends.png` | Genus LFC trend lines across BMI bins |
-| `comm_var_vs_da_sig.png` | Scatter plot of PERMANOVA R² vs number of significant ANCOM-BC features per metadata factor |
+
+---
+
+### PERMANOVA
+
+PERMANOVA is run to assess how much of the overall microbiome community variance is explained by each metadata factor. Bray-Curtis distances are computed from the relative abundance feature table using QIIME 2, then passed to R's `vegan::adonis2` for multifactor permutation testing.
+
+The analysis requires `r-base` and `r-vegan` (see Setup above), as well as `rpy2` to call R from within the notebook.
+
+#### Method
+
+- **Distance metric**: Bray-Curtis, computed via `qiime2.plugins.diversity_lib.methods.bray_curtis`
+- **Test**: `adonis2` with `by="margin"` (each factor tested independently, controlling for all others)
+- **Permutations**: 199
+- **Factors tested**: `bowel_movement`, `bowel_movement_quality`, `age_bin`, `bmi_bin`, `sex`
+- Samples with missing values in any factor are removed prior to testing
+
+#### Intermediate Files
+
+The following files are written to the working directory before calling R:
+
+| File | Description |
+|---|---|
+| `bray_curtis_dm.tsv` | Bray-Curtis distance matrix aligned to metadata samples |
+| `permanova_metadata.tsv` | Filtered and cleaned metadata used in the model |
+
+#### PERMANOVA Outputs
+
+| File | Description |
+|---|---|
+| `adonis2_marginal.csv` | Full `adonis2` results table with R², F-statistic, and p-value per factor |
+| `out/figs/ANCOM-BC/comm_var_vs_da_sig.png` | Scatter plot of PERMANOVA marginal R² vs number of significant ANCOM-BC features per metadata factor |
 
 ## Metadata Variable Prediction
 You can find the scripts to predict different metadata variables in ```src/metadata-variable-prediction```. 
