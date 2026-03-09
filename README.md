@@ -86,6 +86,7 @@ src/
         linear_models.py
         nonlinear_models.py
         pacbio_modeling.py
+        predicted_table_evaluation.py
     differential-abundance/
         ANCOM-BC/
             ancombc_metaG_pergenome.ipynb
@@ -119,6 +120,8 @@ requirements.txt
 
 ## Differential Abundance Analysis
 
+### ANCOM-BC
+
 ### Setup
 
 To run the differential abundance analysis, install the following dependencies into your QIIME 2 conda environment:
@@ -140,9 +143,7 @@ The analysis expects the following input files:
 - **Estimated absolute abundance table** (`.tsv`): Synthetic/estimated absolute abundance training data
 - **Taxonomy annotations** (`.tsv`): WoLR2 taxonomy file mapping feature IDs to taxonomic ranks
 
----
-
-### ANCOM-BC
+### Running the Analysis
 
 The script and notebook for the differential abundance analysis can be found in:
 
@@ -208,6 +209,8 @@ The following files are written to the working directory before calling R:
 | `adonis2_marginal.csv` | Full `adonis2` results table with R², F-statistic, and p-value per factor |
 | `out/figs/ANCOM-BC/comm_var_vs_da_sig.png` | Scatter plot of PERMANOVA marginal R² vs number of significant ANCOM-BC features per metadata factor |
 
+---
+
 ### BIRDMAn
 
 ### Setup
@@ -237,6 +240,8 @@ The BIRDMAn results were primarily used to identify taxa related to metadata gro
 
 The primary output is found here: ```out/figs/BIRDMAn/birdman_heatmaps.png```
 
+---
+
 ## Metadata Variable Prediction
 You can find the scripts to predict different metadata variables in ```src/metadata-variable-prediction```. 
 
@@ -260,6 +265,8 @@ You can find the script for diagnosing bias in different sampling plates in  ```
 
 ### Stool Quality
 ```stool-prediction``` contains one script: ```stool_classification.py```. ```stool_classification.py``` runs a XXX to predict stool quality fro microbiome data. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/stool-prediction```.
+
+---
 
 ## Modeling Absolute Abundance
 The scripts for creating synthetic absolute abundance data from relative abundance data are located in ```absolute-abundance-modeling```. 
@@ -299,8 +306,11 @@ The following metrics are produced as tables and can be found in ```out/tables/a
 | File | Description |
 |---|---|
 | `best_model_metrics.csv` | Training, validation, and testing $R^2$, RMSE, and MAE for the best model |
+| `best_model_metrics.csv` | Training, validation, and testing $R^2$, RMSE, and MAE for predictions in raw space and raw space + bias corrected, Spearman correlation of load error, median log error |
 | `model_summary.csv` | Training, validation, and testing $R^2$, RMSE, and MAE across all tested non linear models |
 | `pacbio_metrics_summary.csv` | Training, validation, and testing $R^2$, RMSE, and MAE for models trained on the new data and the subsampled data |
+
+---
 
 ## Credit
 This project was a collaboration between Monica Dai, Katelyn Zhao, Camille Sicat, Nathan Wang, and Sophie Wang at UC San Diego under the Halıcıoğlu Data Science Institute. Our work would not have been possible without the mentorship of Dr. Rob Knight, Dr. Sam Degregori, and Michael Iter, and other members of the Knight Lab.
