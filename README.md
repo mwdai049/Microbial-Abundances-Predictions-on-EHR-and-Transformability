@@ -16,6 +16,8 @@ This project investigates how microbiome abundance data can be used for biologic
     - [Sex](#sex)
     - [Stool Quality](#stool-quality)
   - [Absolute Abundance Modeling](#modeling-absolute-abundance)
+- [Credit](#credit)
+- [Contributions](#contributions)
 
 ## Setup
 ### QIIME 2
