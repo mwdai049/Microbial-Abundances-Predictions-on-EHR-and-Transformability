@@ -3,10 +3,7 @@
 
 # # 🧬 ANCOM-BC Differential Abundance Analysis
 
-# In[1]:
-
-
-# iport QIIME2, data wrangling, visualization, and statistical analysis libraries
+# import QIIME2, data wrangling, visualization, and statistical analysis libraries
 # QIIME2 is used for artifact handling and Bray–Curtis distance calculation
 # pandas/numpy/matplotlib/seaborn support preprocessing and plotting
 from qiime2 import Artifact, Metadata
@@ -27,27 +24,16 @@ from qiime2.plugins.diversity_lib.methods import bray_curtis
 
 # ## Load Inputs
 
-# In[2]:
-
-
 # load the relative abundance metagenomic feature table from QIIME2 format
 # baseline compositional dataset for ANCOM-BC and PERMANOVA
 metaG_pergenome_path = '/ddn_scratch/k5zhao/data/metaG-pergenome-clean.qza'
 table = Artifact.load(metaG_pergenome_path)
 ft_df = table.view(pd.DataFrame)
 
-
-# In[3]:
-
-
 # standardize sample IDs so feature tables and metadata can be merged consistently
 ft_df = ft_df.copy()
 ft_df.index = ft_df.index.astype(str).str.split(".", n=1).str[1]
 ft_df.index.name = "original_SampleID"
-
-
-# In[4]:
-
 
 # load cleaned host metadata, estimated absolute abundance table,  and true absolute abundance training table for comparison
 # These three tables allow us to compare DA patterns across relative,
@@ -57,21 +43,13 @@ synth_train_df = pd.read_csv('/ddn_scratch/mwdai/capstone/data/synthetic_train.t
 abs_train_df = pd.read_csv('/ddn_scratch/k5zhao/data/classifier_training/abs_train.csv', index_col='original_SampleID')
 abs_train_df = abs_train_df.iloc[:, :synth_train_df.shape[1]]
 
-
-# In[5]:
-
-
 # load taxonomy annotations so significant feature IDs can be interpreted biologically at the genus/species level in downstream summaries and figures
 tax = pd.read_csv('/ddn_scratch/miter/nph-tables/wolr2-taxonomy.tsv', sep="\t", header=None, names=["feature_id", "taxonomy"], dtype=str)
 tax["feature_id"] = tax["feature_id"].str.strip()
 tax["taxonomy"]   = tax["taxonomy"].str.strip()
 tax = tax.drop_duplicates("feature_id").set_index("feature_id")
 
-
 # ## Cleaning Data
-
-# In[6]:
-
 
 # prse QIIME-style taxonomy strings into separate taxonomic ranks
 RANKS = ["domain","phylum","class","order","family","genus","species"]
@@ -94,20 +72,12 @@ def parse_qiime_tax(tax_string: str):
 rank_df = tax["taxonomy"].apply(parse_qiime_tax).apply(pd.Series)
 tax = pd.concat([tax, rank_df], axis=1)
 
-
-# In[7]:
-
-
 # recode bowel movement type labels into shorter, analysis-friendly categories
 metadata['bowel_movement'] = metadata['bowel_movement'].replace({
     '"I tend to have normal formed stool - Type 3 and 4"': 'Type 3/4',
     '"I tend to be constipated (have difficulty passing stool) - Type 1 and 2"': 'Type 1/2',
     '"I tend to have diarrhea (watery stool) - Type 5, 6, and 7"': 'Type 5/6/7'
 })
-
-
-# In[8]:
-
 
 # recode bowel movement quality labels into shorter, analysis-friendly categories
 metadata['bowel_movement_quality'] = metadata['bowel_movement_quality'].replace({
@@ -117,18 +87,11 @@ metadata['bowel_movement_quality'] = metadata['bowel_movement_quality'].replace(
 })
 
 
-# In[9]:
-
-
 categorical_vars = ['bowel_movement', 'bowel_movement_quality']
 continuous_vars = ['age', 'bmi']
 binary_vars = ['sex']
 keep_cols = categorical_vars + continuous_vars + binary_vars
 metadata_small = metadata[keep_cols].copy()
-
-
-# In[10]:
-
 
 # Build binned metadata
 md = metadata_small.copy()
@@ -169,9 +132,6 @@ md = md[
 
 
 # ## Running ANCOM-BC
-
-# In[11]:
-
 
 # # Shared ANCOM-BC parameters
 # formula = "bowel_movement + bowel_movement_quality + age_bin + bmi_bin + sex"
@@ -230,9 +190,6 @@ md = md[
 # res_synth_train = run_ancombc_min(synth_train_df, md, "synth_train_ancombc_differentials.qza")
 
 
-# In[12]:
-
-
 # relative
 rel_diff = Artifact.load("ancombc_differentials.qza")
 os.makedirs("ancombc_export", exist_ok=True)
@@ -248,28 +205,14 @@ synth_diff = Artifact.load("synth_train_ancombc_differentials.qza")
 os.makedirs("ancombc_export_synth", exist_ok=True)
 synth_diff.export_data("ancombc_export_synth")
 
-
-# In[ ]:
-
-
-
-
-
 # ## ANCOM-BC Results
 
 # ### Relative Abundance
-
-# In[13]:
-
 
 # load ANCOM-BC log-fold changes and adjusted q-values, then count how many taxa are significant for each metadata term
 lfc = pd.read_csv("/home/nxwang/ancombc_export/lfc_slice.csv", index_col=0)
 q = pd.read_csv("/home/nxwang/ancombc_export/q_val_slice.csv", index_col=0)
 sig_counts = (q < 0.05).sum().sort_values(ascending=False)
-
-
-# In[14]:
-
 
 sig_counts = sig_counts.drop("(Intercept)", errors="ignore")
 
@@ -283,10 +226,6 @@ plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.savefig("./figs/ANCOM-BC/sig_counts.png", dpi=300, bbox_inches="tight")
 plt.show()
-
-
-# In[15]:
-
 
 # Mapping Taxanomy to ANCOM-BC results
 def join_tax_to_ancom(lfc, q, tax, alpha=0.05):
@@ -311,16 +250,8 @@ def join_tax_to_ancom(lfc, q, tax, alpha=0.05):
 
     return out, sig
 
-
-# In[16]:
-
-
 # join taxonomy annotations to ANCOM-BC outputs so significant hits can be summarized biologically
 all_hits, sig_hits = join_tax_to_ancom(lfc, q, tax)
-
-
-# In[17]:
-
 
 term_groups = {
     "Age": [
@@ -340,10 +271,6 @@ term_groups = {
 
 targets = ['nph_age', 'nph_bmi', 'nph_bowel-movement-type', 'nph_bowel-movement-quality', 'sex']
 
-
-# In[18]:
-
-
 # group model terms into biological targets (age, BMI, stool, sex)
 def map_target(term):
     term = str(term)
@@ -359,10 +286,6 @@ def map_target(term):
         return "sex"
     else:
         return pd.NA
-
-
-# In[19]:
-
 
 # build top enriched and depleted taxa tables for each metadata category
 def build_topbottom_coef(sig_hits, target, top_n=5, feature_col="species"):
@@ -403,10 +326,6 @@ def build_topbottom_coef(sig_hits, target, top_n=5, feature_col="species"):
 
     return out
 
-
-# In[20]:
-
-
 # x-label cleaner + pretty labels for stool terms
 def clean_term_label(t: str) -> str:
     t = str(t)
@@ -434,16 +353,8 @@ def clean_term_label(t: str) -> str:
 
     return t
 
-
-# In[21]:
-
-
 # group model terms for relative abundance significant hits
 sig_hits["target"] = sig_hits["term"].apply(map_target)
-
-
-# In[22]:
-
 
 # Plot multi-panel heatmaps showing ANCOM-BC log-fold changes across metadata bins for the most important taxa
 def plot_5panel_heatmaps(sig_hits_df, outpath, suptitle):
@@ -520,20 +431,12 @@ def plot_5panel_heatmaps(sig_hits_df, outpath, suptitle):
     plt.savefig(outpath, dpi=500, bbox_inches="tight")
     plt.show()
 
-
-# In[23]:
-
-
 # relative abundance heatmaps
 plot_5panel_heatmaps(
     sig_hits,
     outpath="./figs/ANCOM-BC/ancom-bc-genus-5targets_rel_heatmaps.png",
     suptitle="ANCOM-BC Differential Abundance by Metadata (Relative Abundance – Genus Level)"
 )
-
-
-# In[24]:
-
 
 # for poster
 targets_poster = ['nph_age', 'nph_bmi', 'nph_bowel-movement-quality']
@@ -627,10 +530,6 @@ cbar.set_label("Log-fold Change", fontsize=18, labelpad=20)
 plt.savefig('./figs/ANCOM-BC/ancom-bc-final_heatmaps.png', dpi=500, bbox_inches='tight')
 plt.show()
 
-
-# In[25]:
-
-
 # collapse significant feature-level ANCOM-BC results to the genus level by averaging log-fold changes across all features assigned to the same genus within each metadata term
 def genus_lfc_matrix(all_hits):
 
@@ -649,10 +548,6 @@ def genus_lfc_matrix(all_hits):
     return genus_lfc
 
 genus_lfc = genus_lfc_matrix(all_hits)
-
-
-# In[26]:
-
 
 # plot genus-level ANCOM-BC log-fold change trends across ordered bins for a given metadata group
 def plot_group_trends(genus_lfc, group_name, terms, top_n=15):
@@ -681,10 +576,6 @@ def plot_group_trends(genus_lfc, group_name, terms, top_n=15):
     plt.show()
     plt.close()
 
-
-# In[27]:
-
-
 #age
 plot_group_trends(genus_lfc, "Age", term_groups["Age"], top_n=15)
 #bmi
@@ -692,9 +583,6 @@ plot_group_trends(genus_lfc, "BMI", term_groups["BMI"], top_n=15)
 
 
 # ### Absolute Abundance
-
-# In[28]:
-
 
 # load ANCOM-BC absolute abundance log-fold changes and adjusted q-values
 lfc_abs = pd.read_csv("ancombc_export_abs/lfc_slice.csv", index_col=0)
@@ -704,24 +592,13 @@ q_abs = pd.read_csv("ancombc_export_abs/q_val_slice.csv", index_col=0)
 lfc_synth = pd.read_csv("ancombc_export_synth/lfc_slice.csv", index_col=0)
 q_synth = pd.read_csv("ancombc_export_synth/q_val_slice.csv", index_col=0)
 
-
-# In[29]:
-
-
 # join taxonomy annotations to ANCOM-BC absolute and synthetic abundance outputs so significant hits can be summarized biologically
 all_hits_abs, sig_hits_abs = join_tax_to_ancom(lfc_abs, q_abs, tax)
 all_hits_synth, sig_hits_synth = join_tax_to_ancom(lfc_synth, q_synth, tax)
 
-
-# In[30]:
-
-
 # group model terms for absolute/synthetic abundance significant hits
 sig_hits_abs["target"] = sig_hits_abs["term"].apply(map_target)
 sig_hits_synth["target"] = sig_hits_synth["term"].apply(map_target)
-
-
-# In[31]:
 
 
 # absolute abundance heatmaps
@@ -741,9 +618,6 @@ plot_5panel_heatmaps(
 
 # ## Running PERMANOVA
 
-# In[32]:
-
-
 # # Compute Bray-Curtis distance matrix (QIIME2 DistanceMatrix artifact)
 # bray_res = bray_curtis(table=table_art)
 # bray_dm_art = bray_res.distance_matrix
@@ -752,9 +626,6 @@ plot_5panel_heatmaps(
 # dm_fp = "bray_curtis_dm.tsv"
 # bray_dm_art.export_data(os.getcwd())  # exports into current directory
 # os.replace("distance-matrix.tsv", dm_fp)
-
-
-# In[33]:
 
 
 # factors = ["bowel_movement", "bowel_movement_quality", "age_bin", "bmi_bin", "sex"]
@@ -795,13 +666,7 @@ plot_5panel_heatmaps(
 # dm.to_csv(dm_fp, sep="\t")
 
 
-# In[34]:
-
-
 # %load_ext rpy2.ipython
-
-
-# In[35]:
 
 
 # %%R
@@ -830,9 +695,6 @@ plot_5panel_heatmaps(
 
 # ## PERMANOVA Results
 
-# In[36]:
-
-
 # Multifactor PERMANOVA (adonis2 by=margin) results plot
 # Assumes you already created: adonis2_marginal.csv
 # Load PERMANOVA marginal results
@@ -860,9 +722,6 @@ for f in factors:
 da = pd.DataFrame({"Term": factors, "DA_sig_features": da_counts})
 
 summary = perm.merge(da, on="Term", how="left").fillna({"DA_sig_features": 0})
-
-
-# In[37]:
 
 
 # copy with % labels
