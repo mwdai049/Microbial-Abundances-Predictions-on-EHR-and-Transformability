@@ -16,6 +16,9 @@ This project was a collaboration between Monica Dai, Katelyn Zhao, Camille Sicat
 ## PLEASE READ
 Most of the work was performed in the Knight Lab's Barnacle2 cluster. As such, this Github repository only contains clean, finalized scripts. 
 
+## Data
+Our models were trained on human subjects data with personally identifying information (PII). Thus, while our code contains the filepaths to load the data, the data itself is hosted only on the Barnacle2 cluster. 
+
 ## Setup
 ### QIIME 2
 To upload and process the data, you must install QIIME 2. We used the moshpit distribution, and the yml files are in the project directory. Make sure you have Conda or Mamba installed first (Miniconda, Anaconda, or Mambaforge).
@@ -73,10 +76,47 @@ conda activate qiime2-moshpit-2025.7
 pip install -r requirements.txt
 ```
 
-## Data
-Our models were trained on human subjects data with personally identifying information (PII). Thus, while our code contains the filepaths to load the data, the data itself is hosted only on the Barnacle2 cluster. 
+## Differential Abundance Analysis
+### Setup
+To run the files for the differential abundance analysis, please install the following R packages into your environment. You can install them via conda into your QIIME 2 environment:
+```
+conda install -c conda-forge r-base
+conda install -c conda-forge r-vegan
+```
+The script for the differential abundance analysis can be found in ```src/differential-abundance```. 
 
-### Directory Structure
+## Metadata Variable Prediction
+You can find the scripts to predict different metadata variables in ```src/metadata-variable-prediction```. 
+
+### Plate diagnosis
+You can find the script for diagnosing bias in different sampling plates in  ```bmi-stool-model-analysis/bmi_stool_prediction_complete_analysis.ipynb```. The SHAP analysis was performed in ````bmi-stool-model-analysis/shap_analysis.py```.
+
+### Age
+```age-prediction``` contains two scripts: ```age_numeric_predictor_final.py``` and ```age_rf_classifier.py```. 
+* ```age_numeric_predictor_final.py``` runs a Random Forest Regressor, a Gradient Boosted Regressor, and a Radial Basis Function (RBF) Support Vector Machine (SVM) to predict age from microbiome data, and constructs 95% confidence intervals via paired stratified bootstrap testing to verify results. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/age-prediction/age-numeric-predictor```. 
+* ```age_rf_classifier``` runs a Random Forest Classifier to predict whether a sample falls into one of the following age ranges: ‘under 20’, ‘20 - 35’, ‘35 - 50’, ‘50 - 65’, ‘65 - 80’, and ‘over 80’. The script constructs 95% confidence intervals via paired stratified bootstrap procedure to verify results. SHAP analysis is conducted to identify influential taxa.The resulting figures can be found in ```out/figs/age-prediction/age-prediction-classifier```. 
+
+### BMI
+```bmi-prediction``` contains two scripts: ```bmi_classification.py``` and ```bmi_regression.py```.
+* ```bmi_classification.py``` runs a XXX to predict BMI from microbiome data. SHAP analysis is conducted to identify influential taxa.The resulting figures can be found in ```out/figs/bmi-prediction/bmi-classification```.
+* ```bmi_regression.py``` runs a XXX. SHAP analysis is conducted to identify influential taxa.The resulting figures can be found in ```out/figs/bmi-prediction/bmi-regression```.
+
+### Sex
+```sex-prediction``` contains two scripts: ```sex_lr_svm_final.py``` and ```sex_rf_classifier_final.py```. 
+* ```sex_lr_svm_final.py``` runs a Logistic Regressor model and RBF SVM to predict sex from microbiome data, and compares the results to the Random Forest Classifier constructed in ```age_rf_classifier```, with results verified by constructing 95% confidence intervals via paired stratified bootstrap testing. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/sex-prediction/sex-other-models```.
+* ```age_rf_classifier``` runs a Random Forest Classifier on different featuresets to predict sex based on microbiome data. The script constructs 95% confidence intervals via paired stratified bootstrap procedure to verify results. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/sex-prediction/sex-random-forest-classifier```.
+
+### Stool Quality
+```stool-prediction``` contains one script: ```stool_classification.py```. ```stool_classification.py``` runs a XXX to predict stool quality fro microbiome data. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/stool-prediction```.
+
+## Modelling Absolute Abundance
+The scripts for creating synthetic absolute abundance data from relative abundance data can be found in ``absolute-abundance-modeling```. There are four scripts:
+* ```best_model.py```
+* ```linear_models.py```
+* ```nonlinear_models.py```
+* ```pacbio_modeling.py```
+
+## Directory Structure
 ```text
 data_preprocessing/
     preprocessing.py
@@ -127,7 +167,41 @@ out/
           retuned_rel_rf_cm.png
           retuned_rel_rf_roc.png
           rf_macro_auc_comparison.png
-      age_reg_model_comparisons.csv
+        age_reg_model_comparisons.csv
+      bmi-prediction/
+        bmi-classification/
+          confusion_matrix/
+            bmi_bin_Absolute_HGB_confusion.png
+            bmi_bin_Absolute_RandomForest_confusion.png
+            bmi_bin_Absolute_SVM_RBF_confusion.png
+            bmi_bin_Relative_HGB_confusion.png
+            bmi_bin_Relative_RandomForest_confusion.png
+            bmi_bin_Relative_SVM_RBF_confusion.png
+          roc_plots/
+            bmi_bin_Absolute_HGB_roc.png
+            bmi_bin_Absolute_RandomForest_roc.png
+            bmi_bin_Absolute_SVM_RBF_roc.png
+            bmi_bin_Relative_HGB_roc.png
+            bmi_bin_Relative_RandomForest_roc.png
+            bmi_bin_Relative_SVM_RBF_roc.png
+          shap_outputs/
+            classification_bmi_bin_Absolute_HGB_bar.png
+            classification_bmi_bin_Absolute_HGB_beeswarm_class_obese.png
+            classification_bmi_bin_Relative_HGB_bar.png
+            classification_bmi_bin_Relative_HGB_beeswarm_class_obese.png
+        bmi-regression/
+            regression_plots/
+              bmi_Absolute_HGB.png
+              bmi_Absolute_RandomForest.png
+              bmi_Absolute_SVM_RBF.png
+              bmi_Relative_HGB.png
+              bmi_Relative_RandomForest.png
+              bmi_Relative_SVM_RBF.png
+            shap_outputs/
+              regression_bmi_Absolute_HGB_bar.png
+              regression_bmi_Absolute_HGB_beeswarm.png
+              regression_bmi_Relative_HGB_bar.png
+              regression_bmi_Relative_HGB_beeswarm.png
       sex-prediction/
         sex-prediction-other-models/
           sex_abs_lr_cm.png
@@ -158,6 +232,38 @@ out/
           unbalanced_sex_abs_rf_cm.png
           unbalanced_sex_rel_rf_cm.png
         model_comparisons.csv
+    stool-prediction/
+      confusion_matrix/
+        bowel_movement_clean_Absolute_HGB_confusion.png
+        bowel_movement_clean_Absolute_RandomForest_confusion.png
+        bowel_movement_clean_Absolute_SVM_RBF_confusion.png
+        bowel_movement_clean_Relative_HGB_confusion.png
+        bowel_movement_clean_Relative_RandomForest_confusion.png
+        bowel_movement_clean_Relative_SVM_RBF_confusion.png
+      roc_plots/
+        bowel_movement_clean_Absolute_HGB_roc.png
+        bowel_movement_clean_Absolute_RandomForest_roc.png
+        bowel_movement_clean_Absolute_SVM_RBF_roc.png
+        bowel_movement_clean_Relative_HGB_roc.png
+        bowel_movement_clean_Relative_RandomForest_roc.png
+        bowel_movement_clean_Relative_SVM_RBF_roc.png
+      shap_outputs/
+        classification_bowel_movement_clean_Absolute_HGB_bar.png
+        classification_bowel_movement_clean_Absolute_HGB_beeswarm_class_normal.png
+        classification_bowel_movement_clean_Relative_HGB_bar.png
+        classification_bowel_movement_clean_Relative_HGB_beeswarm_class_normal.png
+  tables/
+    absolute-abundance-modeling/
+      best_model_metrics.csv
+      model_summary.csv
+      pacbio_metrics_summary.csv
+    bmi-predicion/
+      baseline_results.csv
+      cls_bmi_results_all.csv
+      reg_bmi_results_all.csv
+    stool-prediction/
+      baseline_results.csv
+      cls_stool_results_all.csv
 src/
     absolute-abundance-modeling/
         linear_models.py
