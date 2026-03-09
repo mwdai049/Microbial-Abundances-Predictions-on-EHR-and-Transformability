@@ -236,3 +236,11 @@ res = pd.DataFrame({'Train': train_raw + train_raw_bc + [train_load_r, mle(y_tra
                     'Test': test_raw + test_raw_bc + [test_load_r, mle(y_test_pred_bc, y_test)]}).T
 res.columns = ['R2 Raw', 'RMSE Raw', 'MAE Raw', 'R2 BC', 'RMSE BC', 'MAE BC', 'Spearman r', 'MLE']
 res.to_csv('/home/mwdai/projects/capstone/out/best_model_raw_metrics.csv')
+
+synth_train = X_train_comp.mul(y_train_pred_bc, axis=0)
+synth_val = X_val_comp.mul(y_val_pred_bc, axis=0)
+synth_test = X_test_comp.mul(y_test_pred_bc, axis=0)
+
+synth_train.to_csv('/ddn_scratch/mwdai/capstone/data/synthetic_train.tsv', sep='\t')
+synth_val.to_csv('/ddn_scratch/mwdai/capstone/data/synthetic_val.tsv', sep='\t')
+synth_test.to_csv('/ddn_scratch/mwdai/capstone/data/synthetic_test.tsv', sep='\t')
