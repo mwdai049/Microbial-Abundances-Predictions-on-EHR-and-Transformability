@@ -91,7 +91,9 @@ src/
             ancombc_metaG_pergenome.ipynb
             ancombc_metaG_pergenome.py
         BIRDMAn/
-            BIRDMAn_metaG_pergenome.py
+            BIRDMAn_analysis.py
+            BIRDMAn_env.yml
+            generate_BIRDMAn_scripts.py
     metadata-variable-prediction/
         age-prediction/
             age_numeric_predictor_final.py
@@ -174,6 +176,35 @@ The following figures are produced:
 | `ancombc_age_trends.png` | Genus LFC trend lines across age bins |
 | `ancombc_bmi_trends.png` | Genus LFC trend lines across BMI bins |
 | `comm_var_vs_da_sig.png` | Scatter plot of PERMANOVA R² vs number of significant ANCOM-BC features per metadata factor |
+
+### BIRDMAn
+
+### Setup
+
+To run BIRDMAn, you will need to install a separate environment to avoid dependency issues. You can run this command to do so:
+
+```bash
+conda env create --name q2-birdman -f src/differential-abundance/BIRDMAn/BIRDMAn_env.yml
+```
+
+### Creating the scripts
+
+BIRDMAn requires heavy compute resources to run, and has a long runtime. Running this script will filter the input feature tables and create SLURM scripts that can be submitted to the cluster to run BIRDMAn:
+
+```bash
+python src/differential-abundance/BIRDMAn/generate_BIRDMAn_scripts.py
+```
+
+Then to submit the scripts, cd into the created directory and run:
+```bash
+sbatch run_birdman.sh
+```
+
+### Running the analysis
+
+The BIRDMAn results were primarily used to identify taxa related to metadata groups and visualize them in a heatmap. The script to run this is in ```src/differential-abundance/BIRDMAn/BIRDMAn_analysis.py```
+
+The primary output is found here: ```out/figs/BIRDMAn/birdman_heatmaps.png```
 
 ## Metadata Variable Prediction
 You can find the scripts to predict different metadata variables in ```src/metadata-variable-prediction```. 
