@@ -116,23 +116,64 @@ requirements.txt
 ```
 
 ## Differential Abundance Analysis
+
 ### Setup
-To run the files for the differential abundance analysis, please install the following R packages into your environment. You can install them via conda into your QIIME 2 environment:
-```
+
+To run the differential abundance analysis, install the following dependencies into your QIIME 2 conda environment:
+
+```bash
 conda install -c conda-forge r-base
 conda install -c conda-forge r-vegan
 ```
 
-To run the differential abundance analysis, run:
+The following Python packages are also required (available via pip or conda): `qiime2`, `biom-format`, `pandas`, `numpy`, `matplotlib`, `seaborn`, and `rpy2`.
+
+### Inputs
+
+The analysis expects the following input files:
+
+- **Feature table** (`.qza`): Relative abundance metagenomic feature table in QIIME 2 format
+- **Host metadata** (`.tsv`): Sample metadata including `bowel_movement`, `bowel_movement_quality`, `age`, `bmi`, and `sex`
+- **Absolute abundance table** (`.csv`): Measured absolute abundance training data
+- **Estimated absolute abundance table** (`.tsv`): Synthetic/estimated absolute abundance training data
+- **Taxonomy annotations** (`.tsv`): WoLR2 taxonomy file mapping feature IDs to taxonomic ranks
+
+### Running the Analysis
+
+The script and notebook for the differential abundance analysis can be found in:
+
 ```
-python src/differential-abundance/ANCOM-BC/ancombc_metaG_pergenome.py
-```
-or
-```
-python src/differential-abundance/BIRDMAn/BIRDMAn_metaG_pergenome.py
+src/differential-abundance/
 ```
 
-Each file will run either ANCOM-BC or BIRDMAn differential abundance analysis. The resulting figures will be found in ```out/figs/ANCOM-BC```.
+The analysis runs ANCOM-BC across three feature table types — **relative**, **true absolute**, and **estimated absolute abundance** — using the following model formula:
+
+```
+bowel_movement + bowel_movement_quality + age_bin + bmi_bin + sex
+```
+
+Reference levels are: female sex, Type 3/4 stool, age 40–49, and normal BMI. A prevalence cutoff of 10% (`prv_cut = 0.10`) and Benjamini–Hochberg FDR correction are applied. PERMANOVA (via R's `vegan::adonis2`, marginal by-term) is also run on Bray–Curtis distances to assess overall community-level variance explained by each metadata factor.
+
+### Outputs
+
+Results figures are saved to:
+
+```
+out/figs/ANCOM-BC/
+```
+
+The following figures are produced:
+
+| File | Description |
+|---|---|
+| `sig_counts.png` | Bar chart of significant differential taxa per metadata term (q < 0.05) |
+| `ancom-bc-genus-5targets_rel_heatmaps.png` | 5-panel genus-level LFC heatmap — relative abundance |
+| `ancom-bc-genus-5targets_abs_heatmaps.png` | 5-panel genus-level LFC heatmap — true absolute abundance |
+| `ancom-bc-genus-5targets_synth_heatmaps.png` | 5-panel genus-level LFC heatmap — estimated absolute abundance |
+| `ancom-bc-final_heatmaps.png` | 3-panel species-level heatmap (age, BMI, bowel movement quality) for poster |
+| `ancombc_age_trends.png` | Genus LFC trend lines across age bins |
+| `ancombc_bmi_trends.png` | Genus LFC trend lines across BMI bins |
+| `comm_var_vs_da_sig.png` | Scatter plot of PERMANOVA R² vs number of significant ANCOM-BC features per metadata factor |
 
 ## Metadata Variable Prediction
 You can find the scripts to predict different metadata variables in ```src/metadata-variable-prediction```. 
