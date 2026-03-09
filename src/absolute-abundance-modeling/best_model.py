@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.inspection import permutation_importance
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, root_mean_squared_error
+from scipy import stats
 import xgboost as xgb
 import torch
 import torch.nn as nn
@@ -187,3 +188,59 @@ metrics_df = pd.DataFrame([
 metrics_df.to_csv("/home/k5zhao/output/best_model_metrics.csv", index=False)
 
 print("Saved metrics to: /home/k5zhao/output/best_model_metrics.csv")
+
+
+### METRICS IN RAW SPACE ###
+
+def eval_split(dmat, y_true):
+    y_pred = bst_best.predict(dmat)
+    y_pred = np.expm1(y_pred)
+    return [r2_score(y_true, y_pred), root_mean_squared_error(y_true, y_pred), mean_absolute_error(y_true, y_pred)]
+
+train_raw = eval_split(dtrain, y_train)
+val_raw = eval_split(dval, y_val)
+test_raw = eval_split(dtest, y_test)
+
+# bias correction
+
+def compute_raw_pred(y_pred_log, sigma2):
+    return np.expm1(y_pred_log + 0.5 * sigma2)
+
+y_train_pred = bst_best.predict(dtrain)
+y_val_pred = bst_best.predict(dval)
+y_test_pred = bst_best.predict(dtest)
+
+train_sigma2 = np.var(y_train_log - y_train_pred)
+val_sigma2 = np.var(y_val_log - y_val_pred)
+
+def eval_split_bc(dmat, y_true_raw, sigma2):
+    y_pred_log = bst_best.predict(dmat)
+    y_pred_raw = compute_raw_pred(y_pred_log, sigma2)
+    return y_pred_raw, [r2_score(y_true_raw, y_pred_raw), root_mean_squared_error(y_true_raw, y_pred_raw), mean_absolute_error(y_true_raw, y_pred_raw)]
+
+y_train_pred_bc, train_raw_bc = eval_split_bc(dtrain, y_train, train_sigma2)
+y_val_pred_bc, val_raw_bc = eval_split_bc(dval, y_val, val_sigma2)
+y_test_pred_bc, test_raw_bc = eval_split_bc(dtest, y_test, val_sigma2)
+
+train_load_r = stats.spearmanr(y_train, y_train_pred).statistic
+val_load_r = stats.spearmanr(y_val, y_val_pred).statistic
+test_load_r = stats.spearmanr(y_test, y_test_pred).statistic
+
+def mle(y_pred, y_true):
+    fold_error = y_pred / y_true
+    median_log_error = np.median(np.abs(np.log10(fold_error)))
+    return median_log_error
+
+res = pd.DataFrame({'Train': train_raw + train_raw_bc + [train_load_r, mle(y_train_pred_bc, y_train)], 
+                    'Val': val_raw + val_raw_bc + [val_load_r, mle(y_val_pred_bc, y_val)], 
+                    'Test': test_raw + test_raw_bc + [test_load_r, mle(y_test_pred_bc, y_test)]}).T
+res.columns = ['R2 Raw', 'RMSE Raw', 'MAE Raw', 'R2 BC', 'RMSE BC', 'MAE BC', 'Spearman r', 'MLE']
+res.to_csv('/home/mwdai/projects/capstone/out/best_model_raw_metrics.csv')
+
+synth_train = X_train_comp.mul(y_train_pred_bc, axis=0)
+synth_val = X_val_comp.mul(y_val_pred_bc, axis=0)
+synth_test = X_test_comp.mul(y_test_pred_bc, axis=0)
+
+synth_train.to_csv('/ddn_scratch/mwdai/capstone/data/synthetic_train.tsv', sep='\t')
+synth_val.to_csv('/ddn_scratch/mwdai/capstone/data/synthetic_val.tsv', sep='\t')
+synth_test.to_csv('/ddn_scratch/mwdai/capstone/data/synthetic_test.tsv', sep='\t')
