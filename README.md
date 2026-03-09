@@ -255,16 +255,16 @@ You can find the script for diagnosing bias in different sampling plates in  ```
 
 ### BMI
 ```bmi-prediction``` contains two scripts: ```bmi_classification.py``` and ```bmi_regression.py```.
-* ```bmi_classification.py``` runs a XXX to predict BMI from microbiome data. SHAP analysis is conducted to identify influential taxa.The resulting figures can be found in ```out/figs/bmi-prediction/bmi-classification```.
-* ```bmi_regression.py``` runs a XXX. SHAP analysis is conducted to identify influential taxa.The resulting figures can be found in ```out/figs/bmi-prediction/bmi-regression```.
+* ```bmi_classification.py``` runs a Random Forest Classifier, a HistGradientBoosting Classifier, and an RBF SVM to predict BMI from microbiome data. SHAP analysis is conducted to identify influential taxa.The resulting figures can be found in ```out/figs/bmi-prediction/bmi-classification```.
+* ```bmi_regression.py``` runs a Random Forest Regressor, a HistGradientBoosting Regressor, and an RBF Support Vector Regressor (SVR) to predict continuous BMI from microbiome data using both absolute and relative abundance tables. SHAP analysis is conducted to identify influential taxa.The resulting figures can be found in ```out/figs/bmi-prediction/bmi-regression```.
 
 ### Sex
 ```sex-prediction``` contains two scripts: ```sex_lr_svm_final.py``` and ```sex_rf_classifier_final.py```. 
 * ```sex_lr_svm_final.py``` runs a Logistic Regressor model and RBF SVM to predict sex from microbiome data, and compares the results to the Random Forest Classifier constructed in ```age_rf_classifier```, with results verified by constructing 95% confidence intervals via paired stratified bootstrap testing. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/sex-prediction/sex-other-models```.
 * ```age_rf_classifier``` runs a Random Forest Classifier on different featuresets to predict sex based on microbiome data. The script constructs 95% confidence intervals via paired stratified bootstrap procedure to verify results. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/sex-prediction/sex-random-forest-classifier```.
 
-### Stool Quality
-```stool-prediction``` contains one script: ```stool_classification.py```. ```stool_classification.py``` runs a XXX to predict stool quality fro microbiome data. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```out/figs/stool-prediction```.
+### Bowel Movement
+```bowel-movement-prediction``` contains one script: ```bowel_movement_classification.py```. ```bowel_movement_classification.py``` runs a Random Forest Classifier, a HistGradientBoosting Classifier, and an RBF SVM to predict bowel movement category from microbiome data using both absolute and relative abundance tables. SHAP analysis is conducted to identify influential taxa. The resulting figures can be found in ```bowel-movement-prediction```.
 
 ---
 
@@ -322,6 +322,6 @@ This project was a collaboration between Monica Dai, Katelyn Zhao, Camille Sicat
 
 **Nathan Wang** ran the ANCOM analysis on the absolute vs. relative abundance data and extensively helped write the report. 
 
-**Sophie Wang** developed the models for predicting BMI and stool quality from microbiome data, and comparing the performance of absolute vs. relative abundance data. 
+**Sophie Wang** developed the models for predicting BMI and bowel movement from microbiome data, and comparing the performance of absolute vs. relative abundance data. 
 
 **Katelyn Zhao** performed PCoA analysis on metadata features and also developed the model for predicting absolute abundance from relative abundance data. 
