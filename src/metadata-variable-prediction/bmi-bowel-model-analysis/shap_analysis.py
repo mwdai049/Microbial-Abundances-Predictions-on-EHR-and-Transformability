@@ -5,7 +5,7 @@ SHAP Analysis Pipeline for HGB Models
 Runs SHAP on saved HistGradientBoosting (HGB) models for:
     1. BMI regression
     2. BMI classification
-    3. Stool quality (Bowel Movement) classification
+    3. Bowel Movement classification
 
 Assumes the three training pipelines have already been run and that
 their trained models were saved to disk.

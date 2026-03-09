@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stool quality(Bowel Movement) Classification Pipeline
+Bowel Movement Classification Pipeline
 
 Purpose
 -------
@@ -61,12 +61,12 @@ Files generated:
 Usage
 -----
 Run all models:
-    python stool_classification.py
+    python bowel_movement_classification.py
 
 Run a single model:
-    python stool_classification.py --model RandomForest
-    python stool_classification.py --model HGB
-    python stool_classification.py --model SVM_RBF
+    python bowel_movement_classification.py --model RandomForest
+    python bowel_movement_classification.py --model HGB
+    python bowel_movement_classification.py --model SVM_RBF
 
 Optional environment variables:
     DATA_DIR   path to input CSV files
@@ -79,7 +79,7 @@ Example with all variables:
     CONF_DIR="/home/zhw074/stool/confusion" \
     ROC_DIR="/home/zhw074/stool/roc_plots" \
     MODEL_DIR="/home/zhw074/stool/models" \
-    python stool_classification.py --model HGB
+    python bowel_movement_classification.py --model HGB
 """
 
 import os
