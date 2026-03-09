@@ -84,6 +84,7 @@ conda install -c conda-forge r-base
 conda install -c conda-forge r-vegan
 ```
 The script for the differential abundance analysis can be found in ```src/differential-abundance```. 
+The resulting figures can be found in ```out/figs/ANCOM-BC```.
 
 ## Metadata Variable Prediction
 You can find the scripts to predict different metadata variables in ```src/metadata-variable-prediction```. 
@@ -116,6 +117,8 @@ The scripts for creating synthetic absolute abundance data from relative abundan
 * ```nonlinear_models.py```
 * ```pacbio_modeling.py```
 
+The resulting figures can be found in ```out/figs/absolute-abundance-modeling```.
+
 ## Directory Structure
 ```text
 data_preprocessing/
@@ -146,28 +149,30 @@ out/
           rf_reg_comparison.png
           rf_taxa_comparison.png
         age-prediction-classifier/
-          abs_rf_nogrid_SHAP.png
-          abs_rf_nogrid_top20_features.png
-          age_abs_rf_sex_cm.png
-          age_abs_rf_sex_gene_cm.png
-          age_rel_rf_sex_cm.png
-          age_rel_rf_sex_gene_cm.png
-          balanced_rf_cm_comparison.png
-          final_abs_rf_top20_features.png
-          final_rel_rf_top20_features.png
-          final_rf_cm.png
-          final_rf_roc.png
-          first_pass_abs_rf_cm.png
-          first_pass_abs_rf_roc.png
-          first_pass_rel_rf_cm.png
-          first_pass_rel_rf_roc.png
-          rel_rf_nogrid_SHAP.png
-          retuned_abs_rf_cm.png
-          retuned_abs_rf_roc.png
-          retuned_rel_rf_cm.png
-          retuned_rel_rf_roc.png
-          rf_macro_auc_comparison.png
-        age_reg_model_comparisons.csv
+          ROC-AUC/
+            final_rf_roc.png
+            first_pass_abs_rf_roc.png
+            first_pass_rel_rf_roc.png
+            retuned_abs_rf_roc.png
+            retuned_rel_rf_roc.png
+            rf_macro_auc_comparison.png
+          confusion_matrix/
+            age_abs_rf_sex_cm.png
+            age_abs_rf_sex_gene_cm.png
+            age_rel_rf_sex_cm.png
+            age_rel_rf_sex_gene_cm.png
+            balanced_rf_cm_comparison.png
+            final_rf_cm.png
+            first_pass_abs_rf_cm.png
+            first_pass_rel_rf_cm.png
+            retuned_abs_rf_cm.png
+            retuned_rel_rf_cm.png
+          feature_importance/
+            abs_rf_nogrid_SHAP.png
+            abs_rf_nogrid_top20_features.png
+            final_abs_rf_top20_features.png
+            final_rel_rf_top20_features.png
+            rel_rf_nogrid_SHAP.png
       bmi-prediction/
         bmi-classification/
           confusion_matrix/
@@ -204,34 +209,39 @@ out/
               regression_bmi_Relative_HGB_beeswarm.png
       sex-prediction/
         sex-prediction-other-models/
-          sex_abs_lr_cm.png
-          sex_abs_lr_shap.png
-          sex_abs_lr_top20_features.png
-          sex_lr_cm_comparison.png
-          sex_lr_roc_comparison.png
-          sex_rel_lr_cm.png
-          sex_rel_lr_shap.png
-          sex_rel_lr_top20_features.png
-          sex_rel_svm_cm.png
-          sex_rf_classifier_final.py
-          sex_svm_cm_comparison.png
-          sex_svm_roc_comparison.png
+           ROC-AUC/
+            sex_lr_roc_comparison.png
+            sex_svm_roc_comparison.png
+          confusion_matrix/
+            sex_abs_lr_cm.png
+            sex_abs_svm_cm.png
+            sex_lr_cm_comparison.png
+            sex_rel_lr_cm.png
+            sex_rel_svm_cm.png
+            sex_svm_cm_comparison.png
+          feature_importance/
+            sex_abs_lr_shap.png
+            sex_abs_lr_top20_features.png
+            sex_rel_lr_shap.png
+            sex_rel_lr_top20_features.png
         sex-random-forest-classifier/
-          balanced_sex_abs_rf_ageless_cm.png
-          balanced_sex_abs_rf_ageless_miss_cm.png
-          balanced_sex_abs_rf_cm.png
-          balanced_sex_rel_rf_ageless_cm.png
-          balanced_sex_rel_rf_ageless_miss_cm.png
-          balanced_sex_rel_rf_cm.png
-          sex_abs_rf_shap.png
-          sex_abs_rf_top20_features.png
-          sex_rel_rf_shap.png
-          sex_rel_rf_top20_features.png
-          sex_rf_cm_comparison.png
-          sex_rf_roc_comparison.png
-          unbalanced_sex_abs_rf_cm.png
-          unbalanced_sex_rel_rf_cm.png
-        model_comparisons.csv
+          ROC-AUC/
+            sex_rf_roc_comparison.png
+          confusion_matrix/
+            balanced_sex_abs_rf_ageless_cm.png
+            balanced_sex_abs_rf_ageless_miss_cm.png
+            balanced_sex_abs_rf_cm.png
+            balanced_sex_rel_rf_ageless_cm.png
+            balanced_sex_rel_rf_ageless_miss_cm.png
+            balanced_sex_rel_rf_cm.png
+            sex_rf_cm_comparison.png
+            unbalanced_sex_abs_rf_cm.png
+            unbalanced_sex_rel_rf_cm.png
+          feature_importance/
+            sex_abs_rf_shap.png
+            sex_abs_rf_top20_features.png
+            sex_rel_rf_shap.png
+            sex_rel_rf_top20_features.png
     stool-prediction/
       confusion_matrix/
         bowel_movement_clean_Absolute_HGB_confusion.png
@@ -257,10 +267,14 @@ out/
       best_model_metrics.csv
       model_summary.csv
       pacbio_metrics_summary.csv
+    age-prediction/
+      age_reg_model_comparisons.csv
     bmi-predicion/
       baseline_results.csv
       cls_bmi_results_all.csv
       reg_bmi_results_all.csv
+    sex-prediction/
+        sex_model_comparisons.csv
     stool-prediction/
       baseline_results.csv
       cls_stool_results_all.csv
@@ -283,9 +297,10 @@ src/
         sex-rediction/
           sex_lr_svm_final.py
           sex_rf_classifier_final.py
+.gitignore
+README.md
 qiime2-moshpit-macos-latest-conda.yml
 qiime2-moshpit-ubuntu-latest-conda.yml
-README.md
 ```
 
 
