@@ -102,14 +102,14 @@ src/
         bmi-prediction/
             bmi_classification.py
             bmi_regression.py
-        bmi-stool-model-analysis/
-            bmi_stool_prediction_complete_analysis.ipynb
+        bmi-bowel-model-analysis/
+            bmi_bowel_prediction_complete_analysis.ipynb
             shap_analysis.py
         sex-prediction/
             sex_lr_svm_final.py
             sex_rf_classifier_final.py
-        stool_prediction/
-            stool_classification.py
+        bowel-movement-prediction/
+            bowel_movement_classification.py
         
 .gitignore
 README.md
