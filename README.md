@@ -1,6 +1,6 @@
 # Microbial Abundances Predictions on EHR and Transformability
 
-- 🔗 **Website:** [View Code](https://katelyn-zhao.github.io/Relative-Absolute-Microbial-Abundances/)  
+- 🔗 **Website:** [View Website](https://katelyn-zhao.github.io/Relative-Absolute-Microbial-Abundances/)  
 - 📄 **Report:** [View Report](https://drive.google.com/file/d/13E0J8UGHHeai270ouIiKM89FnBLRY9Mr/view)  
 - 🖼 **Poster:** [View Poster](https://drive.google.com/file/d/1TQLrf4RslSd6163AeN5YSy-KB23-aMVj/view)
 
